@@ -21,7 +21,6 @@ module.exports.index = async (req, res) => {
 
   // Pagination
   const objectPagination = paginationHelper(req.query);
-  console.log(objectPagination);
 
   let sort = {};
   if (req.query.sortKey && req.query.sortValue) {
@@ -34,4 +33,46 @@ module.exports.index = async (req, res) => {
     .skip(objectPagination.skip)
     .limit(objectPagination.limitedItem);
   res.json(rooms);
+};
+
+// [GET] /api/v1/admin/rooms/detail/:slug
+module.exports.detail = async (req, res) => {
+  const slug = req.params.slug;
+  const room = await Room.findOne({ slug: slug });
+
+  if (!room) {
+    return res.status(404).json({ message: "Room not found" });
+  }
+
+  res.json(room);
+};
+
+// [PATCH] /api/v1/admin/rooms/edit/:slug
+module.exports.editPatch = async (req, res) => {
+  const slug = req.params.slug;
+  const result = await Room.updateOne({ slug: slug }, req.body);
+  if (result.matchedCount === 0) {
+    return res
+      .status(404)
+      .json({ code: 404, message: "Không tìm thấy phòng!" });
+  }
+  res.json({
+    code: 200,
+    message: "Cập nhật thành công cho phòng!",
+  });
+};
+
+// [DELETE] /api/v1/admin/rooms/patch/:slug
+module.exports.deleteItem = async (req, res) => {
+  const slug = req.params.slug;
+  const result = await Room.updateOne({ slug: slug }, { deleted: true });
+  if (result.matchedCount === 0) {
+    return res
+      .status(404)
+      .json({ code: 404, message: "Không tìm thấy phòng!" });
+  }
+  res.json({
+    code: 200,
+    message: "Xóa phòng thành công!",
+  });
 };

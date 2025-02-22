@@ -8,6 +8,7 @@ const routeAdmin = require("./api/v1/routes/admin/index.route");
 
 const cors = require("cors");
 
+app.use(express.json());
 app.use(cors());
 
 routeAdmin(app);
@@ -15,4 +16,3 @@ routeAdmin(app);
 app.listen(port, () => {
   console.log(`App listening on port ${port}`);
 });
-

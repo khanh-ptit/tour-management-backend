@@ -1,7 +1,7 @@
 module.exports = (query) => {
   let objectPagination = {
     currentPage: 1,
-    limitedItem: 2,
+    limitedItem: 4,
     skip: 0,
   };
   // const pages = Math.ceil(countTasks / objectPagination.limitedItem)

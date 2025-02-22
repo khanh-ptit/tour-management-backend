@@ -5,4 +5,10 @@ const controller = require("../../controllers/admin/room.controller");
 
 router.get("/", controller.index);
 
+router.get("/detail/:slug", controller.detail)
+
+router.patch("/edit/:slug", controller.editPatch)
+
+router.delete("/delete/:slug", controller.deleteItem)
+
 module.exports = router;

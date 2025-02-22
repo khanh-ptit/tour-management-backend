@@ -76,3 +76,24 @@ module.exports.deleteItem = async (req, res) => {
     message: "Xóa phòng thành công!",
   });
 };
+
+// [POST] /api/v1/admin/rooms/create
+module.exports.createPost = async (req, res) => {
+  try {
+    console.log(req.body);
+    const newRoom = new Room(req.body);
+    console.log(newRoom);
+    await newRoom.save();
+    res.status(201).json({
+      code: 201,
+      message: "Thêm phòng thành công",
+    });
+  } catch (error) {
+    console.error("Lỗi khi thêm phòng:", error);
+    res.status(400).json({
+      code: 400,
+      message: "Thêm phòng thất bại",
+      error: error.message,
+    });
+  }
+};

@@ -11,4 +11,6 @@ router.patch("/edit/:slug", controller.editPatch)
 
 router.delete("/delete/:slug", controller.deleteItem)
 
+router.post("/create", controller.createPost)
+
 module.exports = router;

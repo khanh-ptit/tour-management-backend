@@ -1,38 +1,34 @@
 const Room = require("../../models/room.model");
 const searchHelper = require("../../../../helpers/search");
-const paginationHelper = require("../../../../helpers/pagination");
 
 // [GET] /api/v1/rooms
 module.exports.index = async (req, res) => {
-  let find = {
-    deleted: false,
-  };
-
-  console.log(req.query);
-
+  let find = { deleted: false };
   const objectSearch = searchHelper(req.query, "name");
   if (req.query.name) {
     find.slug = objectSearch.regex;
   }
-
   if (req.query.status) {
     find.status = req.query.status;
   }
 
   // Pagination
-  const objectPagination = paginationHelper(req.query);
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 4;
+  const skip = (page - 1) * limit;
 
-  let sort = {};
+  let sort = {
+    createdAt: "desc",
+  };
   if (req.query.sortKey && req.query.sortValue) {
+    sort = {};
     sort[req.query.sortKey] = req.query.sortValue;
   }
-  // console.log(sort);
 
-  const rooms = await Room.find(find)
-    .sort(sort)
-    .skip(objectPagination.skip)
-    .limit(objectPagination.limitedItem);
-  res.json(rooms);
+  const total = await Room.countDocuments(find);
+  const rooms = await Room.find(find).sort(sort).skip(skip).limit(limit);
+
+  res.json({ rooms, total });
 };
 
 // [GET] /api/v1/admin/rooms/detail/:slug
@@ -62,7 +58,7 @@ module.exports.editPatch = async (req, res) => {
   });
 };
 
-// [DELETE] /api/v1/admin/rooms/patch/:slug
+// [DELETE] /api/v1/admin/rooms/delete/:slug
 module.exports.deleteItem = async (req, res) => {
   const slug = req.params.slug;
   const result = await Room.updateOne({ slug: slug }, { deleted: true });

@@ -73,3 +73,20 @@ module.exports.me = (req, res) => {
     res.status(401).json({ message: "Token không hợp lệ" });
   }
 };
+
+// [POST] /api/v1/admin/auth/logout
+module.exports.logout = async (req, res) => {
+  try {
+    res.cookie("token", "", {
+      httpOnly: true,
+      expires: new Date(0), // Xóa token bằng cách đặt ngày hết hạn về quá khứ
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+
+    res.json({ message: "Đăng xuất thành công!" });
+  } catch (error) {
+    console.error("Lỗi đăng xuất:", error);
+    res.status(500).json({ message: "Lỗi máy chủ" });
+  }
+};

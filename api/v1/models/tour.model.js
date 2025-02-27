@@ -15,6 +15,10 @@ const tourSchema = new mongoose.Schema(
     images: { type: [String], default: [] }, // Ảnh tour
     services: { type: [mongoose.Schema.Types.ObjectId], ref: "Service" }, // Các dịch vụ kèm theo
     deleted: { type: Boolean, default: false }, // Xóa mềm
+    status: {
+      type: String,
+      default: "active",
+    },
   },
   { timestamps: true }
 );

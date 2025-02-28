@@ -1,6 +1,4 @@
 const Tour = require("../../models/tour.model");
-const TourCategory = require("../../models/tour-category.model"); // Thêm dòng này
-const Service = require("../../models/service.model"); // Nếu dùng .populate("services")
 
 // [GET] /api/v1/admin/tours
 module.exports.index = async (req, res) => {
@@ -44,6 +42,26 @@ module.exports.index = async (req, res) => {
     res.status(500).json({
       code: 500,
       message: "Lỗi server khi lấy danh sách tour",
+      error: error.message,
+    });
+  }
+};
+
+// [POST] /api/v1/admin/tours/create
+module.exports.createPost = async (req, res) => {
+  try {
+    const newTour = new Tour(req.body);
+    // console.log(newTour);
+    await newTour.save();
+    res.status(201).json({
+      code: 201,
+      message: "Thêm tour thành công",
+    });
+  } catch (error) {
+    console.error("Lỗi khi thêm tour:", error);
+    res.status(400).json({
+      code: 400,
+      message: "Thêm tour thất bại",
       error: error.message,
     });
   }

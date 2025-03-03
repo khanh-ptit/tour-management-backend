@@ -66,3 +66,64 @@ module.exports.createPost = async (req, res) => {
     });
   }
 };
+
+// [DELETE] /api/v1/admin/tours/delete/:slug
+module.exports.deleteItem = async (req, res) => {
+  try {
+    const slug = req.params.slug;
+    await Tour.updateOne({ slug: slug }, { deleted: true });
+    res.status(200).json({
+      code: 200,
+      message: "Xóa tour thành công!",
+    });
+  } catch (error) {
+    console.log("Lỗi khi xóa tour: ", error);
+    res.status(400).json({
+      code: 400,
+      message: "Xóa tour thất bại!",
+      error: error.message,
+    });
+  }
+};
+
+// [GET] /api/v1/admin/tours/detail/:slug
+module.exports.detail = async (req, res) => {
+  try {
+    const slug = req.params.slug;
+    const tour = await Tour.findOne({ slug: slug })
+      .populate("categoryId", "name")
+      .populate("services", "name price");
+    res.status(200).json(tour);
+  } catch (error) {
+    console.log("Lỗi: ", error);
+    res.status(400).json({
+      code: 400,
+      message: "Lỗi khi lấy thông tin tour!",
+      error: error.message,
+    });
+  }
+};
+
+// [PATCH] /api/v1/admin/tours/edit/:slug
+module.exports.editPatch = async (req, res) => {
+  try {
+    const slug = req.params.slug;
+    await Tour.updateOne(
+      {
+        slug: slug,
+      },
+      req.body
+    );
+    res.status(200).json({
+      code: 200,
+      message: "Cập nhật tour thành công!",
+    });
+  } catch (error) {
+    console.log("Lỗi: ", error);
+    res.status(400).json({
+      code: 400,
+      message: "Lỗi khi cập nhật tour!",
+      error: error.message,
+    });
+  }
+};

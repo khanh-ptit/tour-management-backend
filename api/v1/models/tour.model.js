@@ -8,6 +8,8 @@ const tourSchema = new mongoose.Schema(
     slug: { type: String, slug: "name", unique: true }, // Slug tự động từ name
     description: { type: String }, // Mô tả tour
     price: { type: Number, required: true }, // Giá tour
+    servicesPrice: { type: Number, default: 0 }, // Tổng giá dịch vụ
+    totalPrice: { type: Number, required: true }, // Giá cuối cùng = price + servicesPrice
     duration: { type: String, required: true }, // Thời gian diễn ra (VD: 3 ngày 2 đêm)
     departureDate: { type: Date, required: true }, // Ngày khởi hành
     returnDate: { type: Date, required: true }, // Ngày kết thúc

@@ -1,27 +1,41 @@
 const TourCategory = require("../../models/tour-category.model");
 
+// Đệ quy xây dựng danh mục cây
+const buildCategoryTree = (categories, parentId = null, level = 0) => {
+  let tree = [];
+  categories
+    .filter((cat) => String(cat.categoryParentId) === String(parentId))
+    .forEach((cat) => {
+      tree.push({
+        _id: cat._id,
+        name: `${"---".repeat(level)} ${cat.name}`,
+        categoryParentId: cat.categoryParentId,
+        description: cat.description, // Thêm mô tả
+        thumbnail: cat.thumbnail, // Thêm ảnh đại diện
+        slug: cat.slug,
+      });
+
+      // Gọi đệ quy để lấy danh mục con
+      tree = tree.concat(buildCategoryTree(categories, cat._id, level + 1));
+    });
+  return tree;
+};
+
 // [GET] /api/v1/admin/tour-categories
 module.exports.index = async (req, res) => {
   try {
-    let find = {
-      deleted: false,
-    };
+    // Lấy tất cả danh mục không bị xóa mềm
+    const categories = await TourCategory.find({ deleted: false });
 
-    // Pagination
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 4;
-    const skip = (page - 1) * limit;
+    // Dùng đệ quy để tạo danh mục có phân cấp
+    const formattedCategories = buildCategoryTree(categories);
 
-    const total = await TourCategory.countDocuments(find);
-    const tourCategories = await TourCategory.find(find)
-      .limit(limit)
-      .skip(skip);
     res.json({
-      tourCategories,
-      total,
+      tourCategories: formattedCategories,
+      total: categories.length,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({
       code: 500,
       message: "Lỗi khi lấy danh sách danh mục",

@@ -34,7 +34,15 @@ module.exports.index = async (req, res) => {
       .skip(skip)
       .limit(limit)
       .populate("categoryId", "name") // Lấy tên danh mục tour
-      .populate("services", "name price"); // Lấy tên các dịch vụ
+      .populate("services", "name price") // Lấy tên các dịch vụ
+      .lean();
+
+    for (const item of tours) {
+      let newPrice = parseInt(
+        (item.totalPrice * (100 - item.discountPercentage)) / 100
+      );
+      item.newPrice = newPrice;
+    }
 
     res.json({ tours, total });
   } catch (error) {
@@ -92,7 +100,9 @@ module.exports.detail = async (req, res) => {
     const slug = req.params.slug;
     const tour = await Tour.findOne({ slug: slug })
       .populate("categoryId", "name")
-      .populate("services", "name price");
+      .populate("services", "name price")
+      .lean();
+    tour.newPrice = (tour.totalPrice * (100 - tour.discountPercentage)) / 100;
     res.status(200).json(tour);
   } catch (error) {
     console.log("Lỗi: ", error);

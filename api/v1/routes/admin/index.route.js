@@ -15,12 +15,21 @@ module.exports = (app) => {
     roomRoutes
   );
 
-  app.use(version + systemConfig.prefixAdmin + "/services", serviceRoutes);
+  app.use(
+    version + systemConfig.prefixAdmin + "/services",
+    authMiddleware.requireAuth,
+    serviceRoutes
+  );
 
-  app.use(version + systemConfig.prefixAdmin + "/tours", tourRoutes);
+  app.use(
+    version + systemConfig.prefixAdmin + "/tours",
+    authMiddleware.requireAuth,
+    tourRoutes
+  );
 
   app.use(
     version + systemConfig.prefixAdmin + "/tour-categories",
+    authMiddleware.requireAuth,
     tourCategoryRoutes
   );
 

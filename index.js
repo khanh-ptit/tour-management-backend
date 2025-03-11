@@ -6,6 +6,7 @@ const cookieParser = require("cookie-parser");
 const database = require("./config/database");
 database.connect();
 const routeAdmin = require("./api/v1/routes/admin/index.route");
+const routeClient = require("./api/v1/routes/client/index.route");
 
 const cors = require("cors");
 const allowedOrigins = [
@@ -29,6 +30,7 @@ app.use(
 );
 
 routeAdmin(app);
+routeClient(app);
 
 app.listen(port, () => {
   console.log(`App listening on port ${port}`);

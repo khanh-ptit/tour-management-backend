@@ -77,3 +77,16 @@ module.exports.getTourByCategory = async (req, res) => {
     });
   }
 };
+
+// // [GET] /api/v1/home/destination/:slug
+// module.exports.getDestination = async (req, res) => {
+//   try {
+//     const slug = req.params.slug;
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json({
+//       code: 500,
+//       message: "Lỗi khi lấy dữ liệu!",
+//     });
+//   }
+// };

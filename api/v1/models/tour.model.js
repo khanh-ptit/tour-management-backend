@@ -15,6 +15,10 @@ const tourSchema = new mongoose.Schema(
     departureDate: { type: Date, required: true }, // Ngày khởi hành
     returnDate: { type: Date, required: true }, // Ngày kết thúc
     categoryId: { type: mongoose.Schema.Types.ObjectId, ref: "TourCategory" }, // Liên kết với danh mục tour
+    destinationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Destination",
+    }, // Liên kết với danh mục tour
     images: { type: [String], default: [] }, // Ảnh tour
     services: { type: [mongoose.Schema.Types.ObjectId], ref: "Service" }, // Các dịch vụ kèm theo
     deleted: { type: Boolean, default: false }, // Xóa mềm

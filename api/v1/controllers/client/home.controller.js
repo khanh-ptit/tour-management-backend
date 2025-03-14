@@ -115,9 +115,15 @@ module.exports.getDestination = async (req, res) => {
     for (const item of tours) {
       let itemSlug = item.slug.split("-");
       itemSlug.pop();
-      itemSlug.shift();
+      if (slug === "tour-trong-nuoc") {
+        itemSlug.shift();
+      } else {
+        itemSlug.splice(0, 3);
+      }
       arrSlug.push(itemSlug.join("-"));
     }
+
+    // console.log(arrSlug);
 
     // 4️⃣ Truy vấn danh sách destination có slug phù hợp
     let destinations = await Destination.find({

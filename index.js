@@ -11,7 +11,7 @@ const routeClient = require("./api/v1/routes/client/index.route");
 const cors = require("cors");
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://admin.mysite.com", // Domain chính thức
+  "https://tour-management-frontend-khaki.vercel.app",
 ];
 
 app.use(express.json());

@@ -3,6 +3,6 @@ const router = express.Router();
 
 const controller = require("../../controllers/client/tour.controller");
 
-router.get("/:slug", controller.getTourByCategory);
+router.get("/", controller.getToursByName);
 
 module.exports = router;

@@ -140,6 +140,15 @@ module.exports.getDestination = async (req, res) => {
       .sort((a, b) => b.quantity - a.quantity) // Sắp xếp giảm dần theo quantity
       .slice(0, 5); // Giới hạn tối đa 5 bản ghi
 
+    // 5️⃣ Tính toán số lượng tour cho mỗi destination
+    let totalDestinationWithQuantity = destinations
+      .map((destination) => ({
+        ...destination,
+        quantity: tours.filter((tour) => tour.slug.includes(destination.slug))
+          .length,
+      }))
+      .sort((a, b) => b.quantity - a.quantity); // Sắp xếp giảm dần theo quantity
+
     // 6️⃣ Nếu chưa đủ 5 bản ghi, bổ sung destination khác từ DB
     if (destinationWithQuantity.length < 5) {
       const extraDestinations = await Destination.find({
@@ -157,6 +166,7 @@ module.exports.getDestination = async (req, res) => {
     res.status(200).json({
       code: 200,
       destinations: destinationWithQuantity,
+      totalDestinations: totalDestinationWithQuantity,
     });
   } catch (error) {
     console.log(error);

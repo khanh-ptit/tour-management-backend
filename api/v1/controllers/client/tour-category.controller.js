@@ -61,7 +61,7 @@ module.exports.getTourByCategory = async (req, res) => {
       // console.log(sortKey, sortValue);
       sort[sortKey] = sortValue;
     } else {
-      sort.createdAt = "asc";
+      sort.createdAt = "desc";
     }
 
     // 4️⃣ Lấy danh sách tour theo phân trang

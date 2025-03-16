@@ -81,3 +81,39 @@ module.exports.getToursByName = async (req, res) => {
     });
   }
 };
+
+// [GET] /api/v1/tours/detail/:slug
+module.exports.getTourDetail = async (req, res) => {
+  try {
+    const slug = req.params.slug;
+    const tour = await Tour.findOne({
+      slug: slug,
+      status: "active",
+      deleted: false,
+    })
+      .populate("categoryId", "name slug")
+      .populate("destinationId", "name")
+      .populate("services", "name price")
+      .lean();
+    if (!tour) {
+      return res.status(404).json({
+        code: 404,
+      });
+    }
+
+    tour.newPrice = parseInt(
+      (tour.totalPrice * (100 - tour.discountPercentage)) / 100
+    );
+
+    res.status(200).json({
+      code: 200,
+      tour,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      code: 500,
+      message: "Đã xảy ra lỗi khi lấy chi tiết tour!",
+    });
+  }
+};

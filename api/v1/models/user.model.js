@@ -19,6 +19,10 @@ const userSchema = new mongoose.Schema(
       default:
         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTjtCIImmPCzDznLfXakp92dvDbAVzkYdxhp5zZbPkGlTDC-YThDAkySJ7G0iXOQKQxb_k&usqp=CAU",
     },
+    cartId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Cart", // Tham chiếu đến model Cart
+    },
   },
   {
     timestamps: true,

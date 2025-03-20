@@ -1,4 +1,5 @@
 const User = require("../../models/user.model");
+const Cart = require("../../models/cart.model");
 const ForgotPassword = require("../../models/forgot-password.model");
 const generateHelper = require("../../../../helpers/generate");
 const sendMailHelper = require("../../../../helpers/sendMail");
@@ -37,8 +38,15 @@ module.exports.register = async (req, res) => {
     // Mã hóa mật khẩu bằng MD5
     const hashedPassword = md5(password);
 
-    // Tạo user mới
     const newUser = new User({ ...req.body, password: hashedPassword });
+    const newCart = new Cart({
+      userId: newUser._id,
+      tours: [],
+    });
+
+    // Tạo user mới
+    await newCart.save();
+    newUser.cartId = newCart._id;
     await newUser.save();
 
     // Tạo JWT token
@@ -99,6 +107,8 @@ module.exports.login = async (req, res) => {
       });
     }
 
+    const cart = await Cart.findOne({ userId: user._id });
+
     // Tạo JWT token
     const token = jwt.sign(
       { userId: user._id, email: user.email },
@@ -112,7 +122,8 @@ module.exports.login = async (req, res) => {
       code: 200,
       message: "Đăng nhập thành công!",
       user: userData,
-      token, // Trả về token
+      token,
+      cart,
     });
   } catch (error) {
     console.log(error);
@@ -177,7 +188,7 @@ module.exports.forgotPassword = async (req, res) => {
         </div>
     `;
 
-    // sendMailHelper.sendMail(email, subject, html);
+    sendMailHelper.sendMail(email, subject, html);
 
     res.json({
       code: 200,

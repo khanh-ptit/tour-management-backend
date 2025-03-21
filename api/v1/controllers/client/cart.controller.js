@@ -57,7 +57,7 @@ module.exports.getCart = async (req, res) => {
       .select("-createdAt -updatedAt")
       .populate(
         "tours.tourId",
-        "name images discountPercentage totalPrice description departureDate returnDate"
+        "name images discountPercentage totalPrice description departureDate returnDate slug"
       )
       .lean();
     for (const item of cart.tours) {
@@ -67,6 +67,7 @@ module.exports.getCart = async (req, res) => {
       );
       tour.newPrice = newPrice;
     }
+    // console.log(cart);
     res.status(200).json({
       code: 200,
       cart,

@@ -8,6 +8,8 @@ router.post("/create", authMiddleware.requireAuth, controller.createOrder);
 
 router.get("/detail/:id", authMiddleware.requireAuth, controller.detail);
 
+router.get("/", authMiddleware.requireAuth, controller.index);
+
 router.get("/check-payment/:id", controller.checkPayment);
 
 module.exports = router;

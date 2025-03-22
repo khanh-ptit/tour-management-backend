@@ -1,5 +1,48 @@
 const Order = require("../../models/order.model");
 const QRCode = require("qrcode");
+const axios = require("axios");
+const API_KEY =
+  "GR2NXF5EZGZHHD7TNQ8M6D6DRM1CY94I9IKOXXAVWKR3UZUMDLUJ3ONOI5OEFQVT";
+const ACCOUNT_NUMBER = "0002033567932";
+
+// [GET] /api/v1/orders
+module.exports.index = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    // console.log(userId);
+    const limit = parseInt(req.query.limit) || 8;
+    const page = parseInt(req.query.page) || 1;
+    const skip = (page - 1) * limit;
+
+    // Thiết lập sắp xếp
+    let sort = {};
+    if (req.query.sortKey && req.query.sortValue) {
+      sort[req.query.sortKey] = req.query.sortValue;
+    } else {
+      sort["createdAt"] = "desc";
+    }
+
+    const orders = await Order.find({
+      userId: userId,
+    })
+      .limit(limit)
+      .skip(skip)
+      .sort(sort);
+
+    const total = await Order.countDocuments({
+      userId: userId,
+    });
+    // console.log(orders);
+    res.status(200).json({
+      code: 200,
+      orders,
+      total,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({});
+  }
+};
 
 // [POST] /api/v1/orders/create
 module.exports.createOrder = async (req, res) => {
@@ -68,12 +111,6 @@ module.exports.detail = async (req, res) => {
     });
   }
 };
-
-const axios = require("axios");
-
-const API_KEY =
-  "GR2NXF5EZGZHHD7TNQ8M6D6DRM1CY94I9IKOXXAVWKR3UZUMDLUJ3ONOI5OEFQVT";
-const ACCOUNT_NUMBER = "0002033567932";
 
 // [GET] /api/v1/orders/check-payment/:id
 module.exports.checkPayment = async (req, res) => {

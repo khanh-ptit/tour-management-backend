@@ -6,6 +6,8 @@ const userRoutes = require("./user.route");
 const authRoutes = require("./auth.route");
 const cartRoutes = require("./cart.route");
 const orderRoutes = require("./order.route");
+const roomChatRoutes = require("./room-chat.route");
+const chatRoutes = require("./chat.route");
 
 module.exports = (app) => {
   const version = "/api/v1";
@@ -25,4 +27,8 @@ module.exports = (app) => {
   app.use(version + "/cart", cartRoutes);
 
   app.use(version + "/orders", orderRoutes);
+
+  app.use(version + "/room-chat", roomChatRoutes);
+
+  app.use(version + "/chat", chatRoutes);
 };

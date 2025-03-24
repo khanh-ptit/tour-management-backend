@@ -1,6 +1,8 @@
 const User = require("../../models/user.model");
 const Cart = require("../../models/cart.model");
 const ForgotPassword = require("../../models/forgot-password.model");
+const RoomChat = require("../../models/room-chat.model");
+const Account = require("../../models/account.model");
 const generateHelper = require("../../../../helpers/generate");
 const sendMailHelper = require("../../../../helpers/sendMail");
 const md5 = require("md5");
@@ -48,6 +50,20 @@ module.exports.register = async (req, res) => {
     await newCart.save();
     newUser.cartId = newCart._id;
     await newUser.save();
+
+    // Lấy danh sách admin
+    const admins = await Account.find({ deleted: false });
+
+    // Tạo phòng chat cho user và admin
+    const newRoomChat = new RoomChat({
+      title: `Hỗ trợ khách hàng - ${newUser.email}`,
+      typeRoom: "support",
+      status: "active",
+      user: newUser._id, // Chỉ có 1 user
+      admins: admins.map((admin) => ({ adminId: admin._id })), // Danh sách admin
+    });
+
+    await newRoomChat.save();
 
     // Tạo JWT token
     const token = jwt.sign(

@@ -37,10 +37,9 @@ module.exports.login = async (req, res) => {
 
     // Lưu token vào cookies (httpOnly giúp bảo vệ chống XSS)
     res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Chỉ bật trên HTTPS khi deploy
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
+      httpOnly: false, // Cho phép truy cập từ frontend
+      secure: false, // Chỉ bật true nếu dùng HTTPS
+      sameSite: "Lax", // Hỗ trợ cookie cross-origin khi cần
     });
 
     res.json({

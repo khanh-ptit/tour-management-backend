@@ -245,17 +245,17 @@ module.exports.otpPassword = async (req, res) => {
     const token = jwt.sign(
       { userId: user._id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: "15m" } // Token hết hạn sau 15 phút (đủ thời gian để đặt lại mật khẩu)
+      { expiresIn: "15m" }
     );
 
     // Trả về thông tin user (ẩn password)
     const { password: _, ...userData } = user.toObject();
-    // Trả về thông báo thành công cùng với token và user
+
     res.status(200).json({
       code: 200,
       message: "Xác thực OTP thành công. Vui lòng đặt lại mật khẩu!",
-      token, // Trả về token
-      user: userData, // Trả về thông tin user (không bao gồm mật khẩu)
+      token,
+      user: userData,
     });
   } catch (error) {
     console.log(error);
@@ -276,9 +276,8 @@ module.exports.deleteAllOtp = async (req, res) => {
 module.exports.resetPassword = async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
-    const { password, confirmPassword } = req.body; // Lấy dữ liệu từ body
+    const { password, confirmPassword } = req.body;
 
-    // Kiểm tra mật khẩu và xác nhận mật khẩu
     if (password !== confirmPassword) {
       return res.status(400).json({
         code: 400,
@@ -294,7 +293,6 @@ module.exports.resetPassword = async (req, res) => {
       });
     }
 
-    // Lấy token từ header
     const token = authHeader.split(" ")[1];
 
     // Xác thực token
@@ -310,7 +308,7 @@ module.exports.resetPassword = async (req, res) => {
 
     // Lấy thông tin người dùng từ token
     const userId = decoded.userId;
-    const user = await User.findById(userId); // Tìm người dùng trong cơ sở dữ liệu
+    const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({
@@ -319,10 +317,8 @@ module.exports.resetPassword = async (req, res) => {
       });
     }
 
-    // Hash mật khẩu mới
     const hashedPassword = md5(password);
 
-    // Kiểm tra xem mật khẩu mới có trùng với mật khẩu cũ không
     if (user.password === hashedPassword) {
       return res.status(400).json({
         code: 400,
@@ -330,11 +326,9 @@ module.exports.resetPassword = async (req, res) => {
       });
     }
 
-    // Cập nhật mật khẩu mới vào cơ sở dữ liệu
     user.password = hashedPassword;
     await user.save();
 
-    // Trả về thông báo thành công
     res.status(200).json({
       code: 200,
       message: "Đặt lại mật khẩu thành công! Đăng nhập để tiếp tục",

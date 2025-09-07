@@ -6,6 +6,9 @@ const cors = require("cors");
 require("dotenv").config();
 const database = require("./config/database");
 
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./api/v1/docs/swagger.docs");
+
 database.connect();
 
 const app = express();
@@ -43,6 +46,8 @@ app.use(
     credentials: true,
   })
 );
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Import routes
 const routeAdmin = require("./api/v1/routes/admin/index.route");

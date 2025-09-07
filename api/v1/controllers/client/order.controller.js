@@ -1,20 +1,17 @@
 const Order = require("../../models/order.model");
 const QRCode = require("qrcode");
 const axios = require("axios");
-const API_KEY =
-  "GR2NXF5EZGZHHD7TNQ8M6D6DRM1CY94I9IKOXXAVWKR3UZUMDLUJ3ONOI5OEFQVT";
-const ACCOUNT_NUMBER = "0002033567932";
+const API_KEY = process.env.API_KEY;
+const ACCOUNT_NUMBER = process.env.ACCOUNT_NUMBER;
 
 // [GET] /api/v1/orders
 module.exports.index = async (req, res) => {
   try {
     const userId = req.user.userId;
-    // console.log(userId);
     const limit = parseInt(req.query.limit) || 8;
     const page = parseInt(req.query.page) || 1;
     const skip = (page - 1) * limit;
 
-    // Thiết lập sắp xếp
     let sort = {};
     if (req.query.sortKey && req.query.sortValue) {
       sort[req.query.sortKey] = req.query.sortValue;
@@ -22,17 +19,20 @@ module.exports.index = async (req, res) => {
       sort["createdAt"] = "desc";
     }
 
-    const orders = await Order.find({
-      userId: userId,
-    })
-      .limit(limit)
-      .skip(skip)
-      .sort(sort);
+    let find = {};
+    if (req.query.paidStatus) {
+      if (req.query.paidStatus === "unPaid") {
+        find.isPaid = false;
+      } else if (req.query.paidStatus == "paid") {
+        find.isPaid = true;
+      }
+    }
 
-    const total = await Order.countDocuments({
-      userId: userId,
-    });
-    // console.log(orders);
+    const query = { userId, ...find };
+
+    const orders = await Order.find(query).limit(limit).skip(skip).sort(sort);
+
+    const total = await Order.countDocuments(query);
     res.status(200).json({
       code: 200,
       orders,
@@ -87,7 +87,7 @@ module.exports.detail = async (req, res) => {
     const transactionContent = `Thanhtoanmadon-${order._id}`;
 
     // Tạo URL thanh toán với tài khoản chính
-    const paymentUrl = `https://qr.sepay.vn/img?bank=MBBank&acc=0002033567932&template=compact&amount=${
+    const paymentUrl = `https://qr.sepay.vn/img?bank=MBBank&acc=${ACCOUNT_NUMBER}&template=compact&amount=${
       order.totalPrice
     }&des=${encodeURIComponent(transactionContent)}`;
 
@@ -95,7 +95,6 @@ module.exports.detail = async (req, res) => {
 
     // Tạo QR code từ URL
     const qrCodeDataUrl = await QRCode.toDataURL(paymentUrl);
-    // console.log("📷 QR Code Data URL:", qrCodeDataUrl.substring(0, 50)); // Debug QR Code
 
     res.status(200).json({
       code: 200,

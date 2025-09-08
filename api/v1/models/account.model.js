@@ -6,7 +6,11 @@ const accountSchema = new mongoose.Schema(
     email: String,
     password: String,
     phoneNumber: String,
-    roleId: String,
+    roleId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Role",
+      required: true,
+    },
     deleted: {
       type: Boolean,
       default: false,

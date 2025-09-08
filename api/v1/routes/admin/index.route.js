@@ -6,6 +6,7 @@ const destinationRoutes = require("./destination.route");
 const tourCategoryRoutes = require("./tour-category.route");
 const roomChatRoutes = require("./room-chat.route.js");
 const chatRoutes = require("./chat.route.js");
+const roleRoutes = require("./role.route.js");
 const systemConfig = require("../../../../config/system.js");
 const authMiddleware = require("../../middlewares/admin/auth.middleware.js");
 
@@ -51,6 +52,12 @@ module.exports = (app) => {
     version + systemConfig.prefixAdmin + "/chats",
     authMiddleware.requireAuth,
     chatRoutes
+  );
+
+  app.use(
+    version + systemConfig.prefixAdmin + "/roles",
+    authMiddleware.requireAuth,
+    roleRoutes
   );
 
   app.use(version + systemConfig.prefixAdmin + "/auth", authRoutes);

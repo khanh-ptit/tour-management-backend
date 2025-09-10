@@ -24,13 +24,14 @@ module.exports = () => {
         const decodedAdmin = jwt.verify(tokenAdmin, process.env.JWT_SECRET);
         socket.userId = decodedAdmin.id;
         socket.userType = "Account";
-        // console.log(`✅ Admin authenticated: ${socket.userId}`);
-      } else {
+        console.log(`✅ Admin authenticated: ${socket.userId}`);
+      }
+      if (token) {
         // Xác thực token user
         const decodedUser = jwt.verify(token, process.env.JWT_SECRET);
         socket.userId = decodedUser.userId;
         socket.userType = "User";
-        // console.log(`✅ User authenticated: ${socket.userId}`);
+        console.log(`✅ User authenticated: ${socket.userId}`);
       }
     } catch (error) {
       // console.log("❌ Invalid token:", error.message);

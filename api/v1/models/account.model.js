@@ -5,7 +5,7 @@ const accountSchema = new mongoose.Schema(
     fullName: String,
     email: String,
     password: String,
-    phoneNumber: String,
+    phone: String,
     roleId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Role",

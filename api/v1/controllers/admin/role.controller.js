@@ -111,3 +111,36 @@ module.exports.edit = async (req, res) => {
     });
   }
 };
+
+// [PATCH] /api/v1/roles/permission
+module.exports.permission = async (req, res) => {
+  try {
+    const updateObj = req.body;
+
+    const bulkOps = Object.entries(updateObj).map(([roleId, perms]) => ({
+      updateOne: {
+        filter: { _id: roleId },
+        update: { $set: { permissions: perms } },
+      },
+    }));
+
+    if (bulkOps.length > 0) {
+      await Role.bulkWrite(bulkOps);
+    }
+
+    const updatedRoles = await Role.find({ deleted: false });
+
+    res.status(200).json({
+      code: 200,
+      message: "Cập nhật phân quyền thành công!",
+      roles: updatedRoles,
+    });
+  } catch (error) {
+    console.error("Lỗi khi cập nhật phân quyền:", error);
+    res.status(400).json({
+      code: 400,
+      message: "Lỗi khi cập nhật phân quyền",
+      error: error.message,
+    });
+  }
+};

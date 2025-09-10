@@ -25,6 +25,7 @@ module.exports.index = async (req, res) => {
     const roles = await Role.find({ deleted: false });
     const total = await Role.countDocuments({ deleted: false });
     res.status(200).json({
+      code: 200,
       roles,
       total,
     });

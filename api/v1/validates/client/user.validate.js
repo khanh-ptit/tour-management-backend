@@ -48,7 +48,7 @@ module.exports.login = (req, res, next) => {
 
 module.exports.register = (req, res, next) => {
   try {
-    let { email, phone, password } = req.body;
+    let { email, phone, password, confirmPassword } = req.body;
 
     if (!email) {
       return res.status(400).json({
@@ -68,6 +68,13 @@ module.exports.register = (req, res, next) => {
       return res.status(400).json({
         code: 400,
         message: "Vui lòng nhập mật khẩu!",
+      });
+    }
+
+    if (!confirmPassword) {
+      return res.status(400).json({
+        code: 400,
+        message: "Vui lòng xác nhận mật khẩu!",
       });
     }
 
@@ -93,6 +100,13 @@ module.exports.register = (req, res, next) => {
         code: 400,
         message:
           "Mật khẩu phải có ít nhất 6 ký tự và số, bao gồm chữ hoa và ký tự đặc biệt!",
+      });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({
+        code: 400,
+        message: "Mật khẩu xác nhận không khớp!",
       });
     }
 
@@ -164,6 +178,39 @@ module.exports.otpPassword = (req, res, next) => {
     }
 
     req.body.email = email.toLowerCase();
+    next();
+  } catch (error) {
+    return res.status(500).json({ code: 500, message: "Lỗi validate!" });
+  }
+};
+
+module.exports.resetPassword = (req, res, next) => {
+  try {
+    let { password, confirmPassword } = req.body;
+
+    if (!password) {
+      return res.status(400).json({
+        code: 400,
+        message: "Vui lòng nhập mật khẩu!",
+      });
+    }
+
+    if (!confirmPassword) {
+      return res.status(400).json({
+        code: 400,
+        message: "Vui lòng xác nhận mật khẩu!",
+      });
+    }
+
+    const passwordRegex = PASSWORD_REGEX;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        code: 400,
+        message:
+          "Mật khẩu phải có ít nhất 6 ký tự và số, bao gồm chữ hoa và ký tự đặc biệt!",
+      });
+    }
+
     next();
   } catch (error) {
     return res.status(500).json({ code: 500, message: "Lỗi validate!" });

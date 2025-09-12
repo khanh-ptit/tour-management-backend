@@ -52,6 +52,10 @@ router.post("/password/otp", validate.otpPassword, controller.otpPassword);
 
 router.delete("/password/delete-otp/:email", controller.deleteAllOtp);
 
-router.patch("/password/reset", controller.resetPassword);
+router.patch(
+  "/password/reset",
+  validate.resetPassword,
+  controller.resetPassword
+);
 
 module.exports = router;

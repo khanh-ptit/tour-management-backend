@@ -52,6 +52,12 @@ router.post("/password/otp", validate.otpPassword, controller.otpPassword);
 
 router.delete("/password/delete-otp/:email", controller.deleteAllOtp);
 
+router.delete("/verify/delete-otp/:email", controller.deleteAllVerifyOtp);
+
+router.post("/verify/resend-otp", controller.resendVerifyOtp);
+
+router.post("/verify", controller.verifyUser);
+
 router.patch(
   "/password/reset",
   validate.resetPassword,

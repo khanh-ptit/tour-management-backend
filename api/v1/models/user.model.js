@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      default: "active",
+      default: "initial",
     },
     avatar: {
       type: String,
@@ -22,6 +22,15 @@ const userSchema = new mongoose.Schema(
     cartId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Cart", // Tham chiếu đến model Cart
+    },
+    lockedUntil: {
+      type: Date,
+      default: null, // Thời điểm mà tài khoản sẽ được mở khóa, null nếu không bị khóa
+    },
+    lockedBy: {
+      type: String,
+      enum: ["passwordForgot", "verifyEmail", null], // Thêm trường này
+      default: null, // Lưu thông tin nguồn khóa tài khoản
     },
   },
   {

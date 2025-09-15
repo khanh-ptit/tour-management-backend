@@ -355,19 +355,39 @@ module.exports.login = async (req, res) => {
 module.exports.forgotPassword = async (req, res) => {
   try {
     const email = req.body.email;
-    const existEmail = await User.findOne({
+    const user = await User.findOne({
       email: email,
       deleted: false,
     });
 
-    if (!existEmail) {
+    if (!user) {
       return res.json({
         code: 400,
-        message: "Email không tồn tại không hệ thống!",
+        message: "Email không tồn tại hoặc chưa được đăng ký!",
       });
     }
 
-    const otp = generateHelper.generateRandomNumber(6);
+    const recentVerifications = await ForgotPassword.find({
+      email: email,
+      expireAt: { $gt: new Date(Date.now() - 3 * 60 * 1000) },
+    });
+
+    if (recentVerifications.length >= 3) {
+      user.status = "inactive";
+      user.lockedUntil = new Date(Date.now() + 3 * 60 * 1000);
+      user.lockedBy = "passwordForgot"; // Cập nhật nguồn khóa
+      await user.save();
+
+      return res.status(400).json({
+        code: 400,
+        message:
+          "Quá nhiều yêu cầu OTP. Tài khoản của bạn đã bị khóa trong 3 phút.",
+      });
+    }
+
+    const secretKey = process.env.SECRET_KEY_TOTP; // Khóa bí mật (nên lưu trữ an toàn, ví dụ trong file .env)
+    const otp = generateHelper.generateTOTP(secretKey, 30, 6); // Tạo OTP với timeStep 30 giây, 6 chữ số
+
     const objectForgotPassword = {
       email: email,
       otp: otp,
@@ -426,9 +446,9 @@ module.exports.otpPassword = async (req, res) => {
 
     const verifyOtp = await ForgotPassword.findOne({
       email: email,
-      otp: otp,
-    });
-    if (!verifyOtp) {
+    }).sort({ createdAt: -1 });
+
+    if (!verifyOtp || verifyOtp.otp !== otp) {
       return res.status(400).json({
         code: 400,
         message: "OTP không hợp lệ",

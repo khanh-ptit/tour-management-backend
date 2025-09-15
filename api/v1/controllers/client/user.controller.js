@@ -278,17 +278,6 @@ module.exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Kiểm tra email đã tồn tại
-    const existEmail = await User.findOne({
-      email,
-      deleted: false,
-    });
-    if (!existEmail) {
-      return res
-        .status(400)
-        .json({ code: 400, message: "Email không hợp lệ hoặc không tồn tại!" });
-    }
-
     // Tìm user theo email
     const user = await User.findOne({
       email,
@@ -308,6 +297,13 @@ module.exports.login = async (req, res) => {
       });
     }
 
+    if (user.status === "forgot") {
+      return res.status(400).json({
+        code: 400,
+        message: "Bạn đã nhập sai mật khẩu quá nhiều lần. Vui lòng xác thực!",
+      });
+    }
+
     if (user.status === "inactive") {
       res.status(400).json({
         code: 400,
@@ -318,11 +314,24 @@ module.exports.login = async (req, res) => {
     // Kiểm tra mật khẩu
     const hashedPassword = md5(password);
     if (user.password !== hashedPassword) {
+      user.failedPasswordCount = (user.failedPasswordCount || 0) + 1;
+      await user.save();
+      if (user.failedPasswordCount === 5) {
+        user.status = "forgot";
+        await user.save();
+        return res.status(400).json({
+          code: 400,
+          message:
+            "Bạn đã nhập sai mật khẩu quá 5 lần! Vui lòng nhập OTP để đặt lại mật khẩu",
+        });
+      }
       return res.status(400).json({
         code: 400,
         message: "Email hoặc mật khẩu không chính xác!",
       });
     }
+    user.failedPasswordCount = 0;
+    await user.save();
 
     const cart = await Cart.findOne({ userId: user._id });
 
@@ -355,6 +364,8 @@ module.exports.login = async (req, res) => {
 module.exports.forgotPassword = async (req, res) => {
   try {
     const email = req.body.email;
+    const exceedingLoginFail = req.body.exceedingLoginFail;
+
     const user = await User.findOne({
       email: email,
       deleted: false,
@@ -373,9 +384,13 @@ module.exports.forgotPassword = async (req, res) => {
     });
 
     if (recentVerifications.length >= 3) {
+      if (exceedingLoginFail) {
+        user.lockedBy = "exceedingLoginFail"; // Cập nhật nguồn khóa
+      } else {
+        user.lockedBy = "passwordForgot"; // Cập nhật nguồn khóa
+      }
       user.status = "inactive";
       user.lockedUntil = new Date(Date.now() + 3 * 60 * 1000);
-      user.lockedBy = "passwordForgot"; // Cập nhật nguồn khóa
       await user.save();
 
       return res.status(400).json({
@@ -460,6 +475,11 @@ module.exports.otpPassword = async (req, res) => {
     const user = await User.findOne({
       email: email,
     });
+    if (user.status !== "active") {
+      user.status = "active";
+    }
+    user.failedPasswordCount = 0;
+    await user.save();
 
     // Tạo JWT token
     const token = jwt.sign(
@@ -626,6 +646,22 @@ cron.schedule("*/1 * * * *", async () => {
   if (resultVerify.modifiedCount > 0) {
     console.log(
       `[CRON] Đã chuyển trạng thái ${resultVerify.modifiedCount} tài khoản về "initial" - API verifyEmailPost.`
+    );
+  }
+
+  const resultExceedingLoginFail = await User.updateMany(
+    {
+      status: "inactive",
+      lockedUntil: { $lte: now },
+      lockedBy: "exceedingLoginFail",
+    },
+    {
+      $set: { status: "forgot", lockedUntil: null, lockedBy: null },
+    }
+  );
+  if (resultExceedingLoginFail.modifiedCount > 0) {
+    console.log(
+      `[CRON] Đã mở khóa ${resultExceedingLoginFail.modifiedCount} tài khoản - API exceedingLoginFail.`
     );
   }
 });

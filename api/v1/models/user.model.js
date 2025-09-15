@@ -21,16 +21,20 @@ const userSchema = new mongoose.Schema(
     },
     cartId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Cart", // Tham chiếu đến model Cart
+      ref: "Cart",
     },
     lockedUntil: {
       type: Date,
-      default: null, // Thời điểm mà tài khoản sẽ được mở khóa, null nếu không bị khóa
+      default: null,
     },
     lockedBy: {
       type: String,
-      enum: ["passwordForgot", "verifyEmail", null], // Thêm trường này
-      default: null, // Lưu thông tin nguồn khóa tài khoản
+      enum: ["passwordForgot", "verifyEmail", "exceedingLoginFail", null],
+      default: null,
+    },
+    failedPasswordCount: {
+      type: Number,
+      default: 0,
     },
   },
   {

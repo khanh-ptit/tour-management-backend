@@ -612,56 +612,56 @@ module.exports.resetPassword = async (req, res) => {
   }
 };
 
-cron.schedule("*/1 * * * *", async () => {
-  const now = new Date();
+// cron.schedule("*/1 * * * *", async () => {
+//   const now = new Date();
 
-  // Cập nhật tài khoản bị khóa trong 3 phút, chuyển về "active" cho API passwordForgotPost
-  const resultForgot = await User.updateMany(
-    {
-      status: "inactive",
-      lockedUntil: { $lte: now },
-      lockedBy: "passwordForgot",
-    },
-    {
-      $set: { status: "active", lockedUntil: null, lockedBy: null },
-    }
-  );
-  if (resultForgot.modifiedCount > 0) {
-    console.log(
-      `[CRON] Đã mở khóa ${resultForgot.modifiedCount} tài khoản - API passwordForgotPost.`
-    );
-  }
+//   // Cập nhật tài khoản bị khóa trong 3 phút, chuyển về "active" cho API passwordForgotPost
+//   const resultForgot = await User.updateMany(
+//     {
+//       status: "inactive",
+//       lockedUntil: { $lte: now },
+//       lockedBy: "passwordForgot",
+//     },
+//     {
+//       $set: { status: "active", lockedUntil: null, lockedBy: null },
+//     }
+//   );
+//   if (resultForgot.modifiedCount > 0) {
+//     console.log(
+//       `[CRON] Đã mở khóa ${resultForgot.modifiedCount} tài khoản - API passwordForgotPost.`
+//     );
+//   }
 
-  // Cập nhật tài khoản bị khóa trong 3 phút, chuyển về "initial" cho API verifyEmailPost
-  const resultVerify = await User.updateMany(
-    {
-      status: "inactive",
-      lockedUntil: { $lte: now },
-      lockedBy: "verifyEmail",
-    },
-    {
-      $set: { status: "initial", lockedUntil: null, lockedBy: null },
-    }
-  );
-  if (resultVerify.modifiedCount > 0) {
-    console.log(
-      `[CRON] Đã chuyển trạng thái ${resultVerify.modifiedCount} tài khoản về "initial" - API verifyEmailPost.`
-    );
-  }
+//   // Cập nhật tài khoản bị khóa trong 3 phút, chuyển về "initial" cho API verifyEmailPost
+//   const resultVerify = await User.updateMany(
+//     {
+//       status: "inactive",
+//       lockedUntil: { $lte: now },
+//       lockedBy: "verifyEmail",
+//     },
+//     {
+//       $set: { status: "initial", lockedUntil: null, lockedBy: null },
+//     }
+//   );
+//   if (resultVerify.modifiedCount > 0) {
+//     console.log(
+//       `[CRON] Đã chuyển trạng thái ${resultVerify.modifiedCount} tài khoản về "initial" - API verifyEmailPost.`
+//     );
+//   }
 
-  const resultExceedingLoginFail = await User.updateMany(
-    {
-      status: "inactive",
-      lockedUntil: { $lte: now },
-      lockedBy: "exceedingLoginFail",
-    },
-    {
-      $set: { status: "forgot", lockedUntil: null, lockedBy: null },
-    }
-  );
-  if (resultExceedingLoginFail.modifiedCount > 0) {
-    console.log(
-      `[CRON] Đã mở khóa ${resultExceedingLoginFail.modifiedCount} tài khoản - API exceedingLoginFail.`
-    );
-  }
-});
+//   const resultExceedingLoginFail = await User.updateMany(
+//     {
+//       status: "inactive",
+//       lockedUntil: { $lte: now },
+//       lockedBy: "exceedingLoginFail",
+//     },
+//     {
+//       $set: { status: "forgot", lockedUntil: null, lockedBy: null },
+//     }
+//   );
+//   if (resultExceedingLoginFail.modifiedCount > 0) {
+//     console.log(
+//       `[CRON] Đã mở khóa ${resultExceedingLoginFail.modifiedCount} tài khoản - API exceedingLoginFail.`
+//     );
+//   }
+// });

@@ -29,6 +29,10 @@ const orderSchema = new mongoose.Schema(
       default: false,
     },
     totalPrice: Number,
+    deleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

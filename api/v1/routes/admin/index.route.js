@@ -42,6 +42,7 @@ module.exports = (app) => {
 
   app.use(
     version + systemConfig.prefixAdmin + "/destinations",
+    authMiddleware.requireAuth,
     destinationRoutes
   );
 

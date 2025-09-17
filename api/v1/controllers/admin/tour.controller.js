@@ -33,8 +33,10 @@ module.exports.index = async (req, res) => {
       .sort(sort)
       .skip(skip)
       .limit(limit)
-      .populate("categoryId", "name") // Lấy tên danh mục tour
-      .populate("services", "name price") // Lấy tên các dịch vụ
+      .populate("categoryId", "name")
+      .populate("services", "name price")
+      .populate("createdBy.accountId", "fullName")
+      .populate("updatedBy.accountId", "fullName")
       .lean();
 
     for (const item of tours) {
@@ -59,7 +61,10 @@ module.exports.index = async (req, res) => {
 module.exports.createPost = async (req, res) => {
   try {
     const newTour = new Tour(req.body);
-    // console.log(newTour);
+    newTour.createdBy = {
+      accountId: req.user.id,
+      createdAt: new Date(),
+    };
     await newTour.save();
     res.status(201).json({
       code: 201,
@@ -79,7 +84,11 @@ module.exports.createPost = async (req, res) => {
 module.exports.deleteItem = async (req, res) => {
   try {
     const slug = req.params.slug;
-    await Tour.updateOne({ slug: slug }, { deleted: true });
+    const deletedBy = {
+      accountId: req.user.id,
+      deletedAt: new Date(),
+    };
+    await Tour.updateOne({ slug: slug }, { deleted: true, deletedBy });
     res.status(200).json({
       code: 200,
       message: "Xóa tour thành công!",
@@ -118,11 +127,20 @@ module.exports.detail = async (req, res) => {
 module.exports.editPatch = async (req, res) => {
   try {
     const slug = req.params.slug;
+    const updatedBy = {
+      accountId: req.user.id,
+      updatedAt: new Date(),
+    };
     await Tour.updateOne(
       {
         slug: slug,
       },
-      req.body
+      {
+        $set: req.body,
+        $push: {
+          updatedBy: updatedBy,
+        },
+      }
     );
     res.status(200).json({
       code: 200,

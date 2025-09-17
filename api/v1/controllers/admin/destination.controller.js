@@ -3,11 +3,31 @@ const Destination = require("../../models/destination.model");
 // [GET] /api/v1/admin/destination
 module.exports.index = async (req, res) => {
   try {
+    let find = { deleted: false };
     let sort = {
       createdAt: "desc",
     };
-    const destinations = await Destination.find({ deleted: false }).sort(sort);
-    const total = await Destination.countDocuments({ deleted: false });
+    if (req.query.sortKey && req.query.sortValue) {
+      sort = {};
+      sort[req.query.sortKey] = req.query.sortValue;
+    }
+    if (req.query.keyword) {
+      const keyword = req.query.keyword;
+      const regex = new RegExp(keyword, "i");
+      find.slug = regex;
+    }
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 4;
+    const skip = (page - 1) * limit;
+
+    const destinations = await Destination.find(find)
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .populate("createdBy.accountId", "fullName")
+      .populate("updatedBy.accountId", "fullName");
+    const total = await Destination.countDocuments(find);
     res.status(200).json({
       destinations,
       total,
@@ -25,7 +45,11 @@ module.exports.index = async (req, res) => {
 module.exports.deleteItem = async (req, res) => {
   try {
     const slug = req.params.slug;
-    await Destination.updateOne({ slug: slug }, { deleted: true });
+    const deletedBy = {
+      accountId: req.user.id,
+      deletedAt: new Date(),
+    };
+    await Destination.updateOne({ slug: slug }, { deleted: true, deletedBy });
     res.status(200).json({
       code: 200,
       message: "Xóa thành công điểm đến!",
@@ -43,6 +67,10 @@ module.exports.deleteItem = async (req, res) => {
 module.exports.createPost = async (req, res) => {
   try {
     const newDestination = new Destination(req.body);
+    newDestination.createdBy = {
+      accountId: req.user.id,
+      createdAt: new Date(),
+    };
     await newDestination.save();
     res.status(200).json({
       code: 200,
@@ -61,9 +89,18 @@ module.exports.createPost = async (req, res) => {
 module.exports.editPatch = async (req, res) => {
   try {
     const slug = req.params.slug;
+    const updatedBy = {
+      accountId: req.user.id,
+      updatedAt: new Date(),
+    };
     const updateDestination = await Destination.updateOne(
       { slug: slug },
-      req.body
+      {
+        $set: req.body,
+        $push: {
+          updatedBy: updatedBy,
+        },
+      }
     );
     if (updateDestination) {
       res.status(200).json({

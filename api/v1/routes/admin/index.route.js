@@ -10,6 +10,7 @@ const roleRoutes = require("./role.route.js");
 const accountRoutes = require("./account.route.js");
 const userRoutes = require("./user.route.js");
 const orderRoutes = require("./order.route.js");
+const dashboardRoutes = require("./dashboard.route.js");
 const systemConfig = require("../../../../config/system.js");
 const authMiddleware = require("../../middlewares/admin/auth.middleware.js");
 
@@ -80,6 +81,12 @@ module.exports = (app) => {
     version + systemConfig.prefixAdmin + "/orders",
     authMiddleware.requireAuth,
     orderRoutes
+  );
+
+  app.use(
+    version + systemConfig.prefixAdmin + "/dashboard",
+    authMiddleware.requireAuth,
+    dashboardRoutes
   );
 
   app.use(version + systemConfig.prefixAdmin + "/auth", authRoutes);

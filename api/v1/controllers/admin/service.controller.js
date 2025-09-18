@@ -19,7 +19,10 @@ module.exports.index = async (req, res) => {
     }
 
     const total = await Service.countDocuments(find);
-    const services = await Service.find(find).sort(sort).skip(skip).limit(limit);
+    const services = await Service.find(find)
+      .sort(sort)
+      .skip(skip)
+      .limit(limit);
 
     res.json({ services, total });
   } catch (error) {
@@ -33,10 +36,11 @@ module.exports.detail = async (req, res) => {
   try {
     const service = await Service.findById(req.params.id);
     if (!service || service.deleted) {
-      return res.status(404)
-      .json({ code: 404, message: "Không tìm thấy dịch vụ!" });
+      return res
+        .status(404)
+        .json({ code: 404, message: "Không tìm thấy dịch vụ!" });
     }
-    res.json(service);  
+    res.json(service);
   } catch (error) {
     console.error("Lỗi lấy chi tiết dịch vụ:", error);
     return res.status(500).json({ code: 500, message: "Lỗi máy chủ" });
@@ -55,7 +59,13 @@ module.exports.createPost = async (req, res) => {
     });
   } catch (error) {
     console.error("Lỗi thêm dịch vụ:", error);
-    res.status(500).json({ code: 500, message: "Thêm dịch vụ thất bại", error: error.message });
+    res
+      .status(500)
+      .json({
+        code: 500,
+        message: "Thêm dịch vụ thất bại",
+        error: error.message,
+      });
   }
 };
 
@@ -64,26 +74,34 @@ module.exports.editPatch = async (req, res) => {
   try {
     const result = await Service.updateOne({ _id: req.params.id }, req.body);
     if (result.matchedCount === 0) {
-      return res.status(404).json({ code: 404, message: "Không tìm thấy dịch vụ" });
+      return res
+        .status(404)
+        .json({ code: 404, message: "Không tìm thấy dịch vụ" });
     }
     res.status(200).json({ code: 200, message: "Cập nhật dịch vụ thành công" });
   } catch (error) {
     console.error("Lỗi cập nhật dịch vụ:", error);
-    return res.status(500).json({ code: 500, message: "Cập nhật thất bại", error: error.message });
+    return res
+      .status(500)
+      .json({ code: 500, message: "Cập nhật thất bại", error: error.message });
   }
 };
 
 // [DELETE] /api/v1/admin/services/delete/:id
 module.exports.deleteItem = async (req, res) => {
   try {
-    const result = await Service.updateOne({ _id: req.params.id }, { deleted: true });
+    const result = await Service.updateOne(
+      { _id: req.params.id },
+      { deleted: true }
+    );
     if (result.matchedCount === 0) {
-      return res.status(404).json({ code: 404, message: "Không tìm thấy dịch vụ" });
+      return res
+        .status(404)
+        .json({ code: 404, message: "Không tìm thấy dịch vụ" });
     }
     res.status(200).json({ code: 200, message: "Xóa dịch vụ thành công" });
   } catch (error) {
     console.error("Lỗi xóa dịch vụ:", error);
-    res.status(500).json({ code:500, message: "Xóa dịch vụ thất bại" });
+    res.status(500).json({ code: 500, message: "Xóa dịch vụ thất bại" });
   }
 };
-

@@ -174,7 +174,7 @@ module.exports.edit = async (req, res) => {
     if (existPhone) {
       return res.status(400).json({
         code: 400,
-        message: "Số tài khoản đã được sử dụng bởi tài khoản khác!",
+        message: "Số điện thoại đã được sử dụng bởi tài khoản khác!",
       });
     }
 

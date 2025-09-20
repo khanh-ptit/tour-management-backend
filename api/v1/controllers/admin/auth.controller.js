@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const Account = require("../../models/account.model");
-// require("dotenv").config();
+const md5 = require("md5");
 
 // Tạo secret key cho JWT
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -20,8 +20,7 @@ module.exports.login = async (req, res) => {
     }
 
     // So sánh mật khẩu
-    const isMatch = password === account.password ? true : false;
-    // const isMatch = await bcrypt.compare(password, account.password);
+    const isMatch = md5(password) === account.password ? true : false;
     if (!isMatch) {
       return res
         .status(400)
@@ -32,7 +31,7 @@ module.exports.login = async (req, res) => {
     const token = jwt.sign(
       { id: account._id, roleId: account.roleId },
       JWT_SECRET,
-      { expiresIn: "7d" } // Token hết hạn sau 7 ngày
+      { expiresIn: "7d" }
     );
 
     // Lưu token vào cookies (httpOnly giúp bảo vệ chống XSS)

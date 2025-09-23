@@ -9,6 +9,7 @@ const sendMailHelper = require("../../../../helpers/sendMail");
 const md5 = require("md5");
 const jwt = require("jsonwebtoken");
 const cron = require("node-cron");
+const Order = require("../../models/order.model");
 
 // [POST] /api/v1/user/register
 module.exports.register = async (req, res) => {
@@ -608,6 +609,205 @@ module.exports.resetPassword = async (req, res) => {
     res.status(500).json({
       code: 500,
       message: "Đã xảy ra lỗi khi đặt lại mật khẩu",
+    });
+  }
+};
+
+// [GET] /api/v1/user/profile
+module.exports.profile = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const user = await User.findOne({
+      _id: userId,
+    }).select("-password");
+    if (!user) {
+      return res.status(404).json({
+        code: 404,
+        message: "Người dùng không tồn tại",
+      });
+    }
+
+    res.status(200).json({
+      code: 200,
+      user,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      code: 500,
+      message: "Lỗi máy chủ",
+    });
+  }
+};
+
+// [GET] /api/v1/user/order-statistic
+module.exports.orderStatistic = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const orders = await Order.find({
+      userId,
+      deleted: false,
+    });
+
+    const totalUnpaidOrder = orders.filter((o) => !o.isPaid).length;
+    const totalPaidOrder = orders.filter((o) => o.isPaid).length;
+
+    const unpaidOrderPercentage = (
+      (totalUnpaidOrder / (totalUnpaidOrder + totalPaidOrder)) *
+      100
+    ).toFixed(2);
+
+    const paidOrderPercentage = (
+      (totalPaidOrder / (totalUnpaidOrder + totalPaidOrder)) *
+      100
+    ).toFixed(2);
+
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const startDate = new Date(currentYear, currentMonth - 6, 1);
+    const endDate = new Date(currentYear, currentMonth, 0);
+
+    const lastSixMonthOrders = orders.filter((o) => {
+      const created = new Date(o.createdAt);
+      return o.isPaid && created >= startDate && created <= endDate;
+    });
+
+    const lastSixMonthSpend = [];
+    for (let i = 6; i >= 1; i--) {
+      const date = new Date(currentYear, currentMonth - i, 1);
+      const key = `${date.getMonth() + 1}-${date.getFullYear()}`;
+
+      const monthOrders = lastSixMonthOrders.filter((o) => {
+        const d = new Date(o.createdAt);
+        return (
+          d.getMonth() === date.getMonth() &&
+          d.getFullYear() === date.getFullYear()
+        );
+      });
+
+      const totalSpend = monthOrders.reduce(
+        (sum, o) => sum + (o.totalPrice || 0),
+        0
+      );
+
+      lastSixMonthSpend.push({
+        month: key,
+        totalSpend,
+      });
+    }
+
+    res.status(200).json({
+      code: 200,
+      orderPercentage: {
+        unpaidOrderPercentage,
+        paidOrderPercentage,
+      },
+      monthlySpend: lastSixMonthSpend,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      code: 500,
+      message: "Lỗi máy chủ",
+    });
+  }
+};
+
+// [PATCH] /api/v1/user/change-password
+module.exports.changePassword = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { oldPassword, newPassword } = req.body;
+    const user = await User.findOne({
+      _id: userId,
+      deleted: false,
+    }).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        code: 404,
+        message: "Người dùng không tồn tại",
+      });
+    }
+    if (md5(oldPassword) !== user.password) {
+      return res.status(400).json({
+        code: 400,
+        message: "Mật khẩu không hợp lệ",
+      });
+    }
+    if (md5(newPassword) === user.password) {
+      return res.status(400).json({
+        code: 400,
+        message: "Mật khẩu mới không được dùng với mật khẩu cũ",
+      });
+    }
+    await User.updateOne(
+      {
+        _id: userId,
+      },
+      {
+        $set: {
+          password: md5(newPassword),
+        },
+      }
+    );
+    res.status(200).json({
+      code: 200,
+      message: "Cập nhật mật khẩu thành công",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      code: 500,
+      message: "Lỗi máy chủ",
+    });
+  }
+};
+
+// [PATCH] /api/v1/user/edit-info
+module.exports.editInfo = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const user = await User.findOne({
+      _id: userId,
+      deleted: false,
+    }).select("-password");
+    if (!user) {
+      return res.status(404).json({
+        code: 404,
+        message: "Người dùng không tồn tại",
+      });
+    }
+    const { phone } = req.body;
+    const existPhone = await User.findOne({
+      _id: {
+        $ne: userId,
+      },
+      phone,
+    });
+    if (existPhone) {
+      return res.status(400).json({
+        code: 400,
+        message: "Số điện thoại đã được sử dụng bởi tài khoản khác",
+      });
+    }
+    await User.updateOne(
+      {
+        _id: userId,
+      },
+      req.body
+    );
+    res.status(200).json({
+      code: 200,
+      message: "Cập nhật thông tin thành công",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      code: 500,
+      message: "Lỗi máy chủ",
     });
   }
 };

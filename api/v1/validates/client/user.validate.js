@@ -216,3 +216,82 @@ module.exports.resetPassword = (req, res, next) => {
     return res.status(500).json({ code: 500, message: "Lỗi validate!" });
   }
 };
+
+module.exports.changePassword = (req, res, next) => {
+  try {
+    let { oldPassword, newPassword, confirmPassword } = req.body;
+
+    if (!oldPassword) {
+      return res.status(400).json({
+        code: 400,
+        message: "Vui lòng nhập mật khẩu cũ!",
+      });
+    }
+
+    if (!newPassword) {
+      return res.status(400).json({
+        code: 400,
+        message: "Vui lòng nhập mật khẩu mới!",
+      });
+    }
+
+    if (!confirmPassword) {
+      return res.status(400).json({
+        code: 400,
+        message: "Vui lòng xác nhận mật khẩu!",
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        code: 400,
+        message: "Mật khẩu xác nhận không khớp!",
+      });
+    }
+
+    const passwordRegex = PASSWORD_REGEX;
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(400).json({
+        code: 400,
+        message:
+          "Mật khẩu phải có ít nhất 6 ký tự và số, bao gồm chữ hoa và ký tự đặc biệt!",
+      });
+    }
+
+    next();
+  } catch (error) {
+    return res.status(500).json({ code: 500, message: "Lỗi validate!" });
+  }
+};
+
+module.exports.editInfo = (req, res, next) => {
+  try {
+    let { fullName, phone } = req.body;
+
+    if (!fullName) {
+      return res.status(400).json({
+        code: 400,
+        message: "Họ và tên không được để trống!",
+      });
+    }
+
+    if (!phone) {
+      return res.status(400).json({
+        code: 400,
+        message: "Vui lòng nhập số điện thoại!",
+      });
+    }
+
+    const phoneRegex = PHONE_REGEX;
+    if (!phoneRegex.test(phone)) {
+      return res.status(400).json({
+        code: 400,
+        message: "Số điện thoại không hợp lệ!",
+      });
+    }
+
+    next();
+  } catch (error) {
+    return res.status(500).json({ code: 500, message: "Lỗi validate!" });
+  }
+};

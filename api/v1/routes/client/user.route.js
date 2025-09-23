@@ -3,6 +3,7 @@ const router = express.Router();
 
 const controller = require("../../controllers/client/user.controller");
 const validate = require("../../validates/client/user.validate");
+const authMiddleware = require("../../middlewares/client/auth.middleware");
 
 /**
  * @swagger
@@ -60,8 +61,31 @@ router.post("/verify", controller.verifyUser);
 
 router.patch(
   "/password/reset",
+  authMiddleware.requireAuth,
   validate.resetPassword,
   controller.resetPassword
+);
+
+router.get("/profile", authMiddleware.requireAuth, controller.profile);
+
+router.get(
+  "/order-statistic",
+  authMiddleware.requireAuth,
+  controller.orderStatistic
+);
+
+router.patch(
+  "/change-password",
+  authMiddleware.requireAuth,
+  validate.changePassword,
+  controller.changePassword
+);
+
+router.patch(
+  "/edit-info",
+  authMiddleware.requireAuth,
+  validate.editInfo,
+  controller.editInfo
 );
 
 module.exports = router;

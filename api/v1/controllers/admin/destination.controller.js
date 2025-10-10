@@ -3,6 +3,12 @@ const Destination = require("../../models/destination.model");
 // [GET] /api/v1/admin/destination
 module.exports.index = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("destinations_view")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền xem danh sách điểm đến",
+      });
+    }
     let find = { deleted: false };
     let sort = {
       createdAt: "desc",
@@ -44,6 +50,12 @@ module.exports.index = async (req, res) => {
 // [DELETE] /api/v1/admin/destinations/delete/:slug
 module.exports.deleteItem = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("destinations_delete")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền xoá điểm đến",
+      });
+    }
     const slug = req.params.slug;
     const deletedBy = {
       accountId: req.user.id,
@@ -66,6 +78,12 @@ module.exports.deleteItem = async (req, res) => {
 // [POST] /api/v1/admin/destinations/create
 module.exports.createPost = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("destinations_create")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền tạo điểm đến",
+      });
+    }
     const newDestination = new Destination(req.body);
     newDestination.createdBy = {
       accountId: req.user.id,
@@ -88,6 +106,12 @@ module.exports.createPost = async (req, res) => {
 // [PATCH] /api/v1/admin/destinations/edit/:slug
 module.exports.editPatch = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("destinations_edit")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền chỉnh sửa điểm đến",
+      });
+    }
     const slug = req.params.slug;
     const updatedBy = {
       accountId: req.user.id,

@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const Account = require("../../models/account.model");
+const Role = require("../../models/role.model");
 const md5 = require("md5");
 
 // Tạo secret key cho JWT
@@ -41,6 +42,10 @@ module.exports.login = async (req, res) => {
       sameSite: "Lax", // Hỗ trợ cookie cross-origin khi cần
     });
 
+    const role = await Role.findOne({
+      _id: account.roleId,
+    }).select("permissions");
+
     res.json({
       message: "Đăng nhập thành công",
       user: {
@@ -50,6 +55,8 @@ module.exports.login = async (req, res) => {
         roleId: account.roleId,
         avatar: account.avatar,
       },
+      token,
+      role,
     });
   } catch (error) {
     console.error("Lỗi đăng nhập:", error);
@@ -58,7 +65,7 @@ module.exports.login = async (req, res) => {
 };
 
 // [POST] /api/v1/admin/auth/me
-module.exports.me = (req, res) => {
+module.exports.me = async (req, res) => {
   const token = req.cookies.token;
   if (!token) {
     return res.status(401).json({ message: "Bạn chưa đăng nhập" });
@@ -66,7 +73,11 @@ module.exports.me = (req, res) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    res.json({ user: decoded });
+    const role = await Role.findOne({
+      _id: decoded.roleId,
+    }).select("permissions");
+
+    res.json({ user: decoded, role });
   } catch (error) {
     res.status(401).json({ message: "Token không hợp lệ" });
   }

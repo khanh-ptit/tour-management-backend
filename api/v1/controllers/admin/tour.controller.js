@@ -3,6 +3,12 @@ const Tour = require("../../models/tour.model");
 // [GET] /api/v1/admin/tours
 module.exports.index = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("tours_view")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền xem danh sách tour",
+      });
+    }
     let find = { deleted: false };
 
     if (req.query.status) {
@@ -46,7 +52,7 @@ module.exports.index = async (req, res) => {
       item.newPrice = newPrice;
     }
 
-    res.json({ tours, total });
+    res.status(200).json({ code: 200, tours, total });
   } catch (error) {
     console.error("Lỗi khi lấy danh sách tour:", error);
     res.status(500).json({
@@ -60,6 +66,12 @@ module.exports.index = async (req, res) => {
 // [POST] /api/v1/admin/tours/create
 module.exports.createPost = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("tours_create")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền thêm tour",
+      });
+    }
     const newTour = new Tour(req.body);
     newTour.createdBy = {
       accountId: req.user.id,
@@ -83,6 +95,12 @@ module.exports.createPost = async (req, res) => {
 // [DELETE] /api/v1/admin/tours/delete/:slug
 module.exports.deleteItem = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("tours_delete")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền xóa tour",
+      });
+    }
     const slug = req.params.slug;
     const deletedBy = {
       accountId: req.user.id,
@@ -106,6 +124,12 @@ module.exports.deleteItem = async (req, res) => {
 // [GET] /api/v1/admin/tours/detail/:slug
 module.exports.detail = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("tours_view")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền xem tour",
+      });
+    }
     const slug = req.params.slug;
     const tour = await Tour.findOne({ slug: slug })
       .populate("categoryId", "name")
@@ -126,6 +150,12 @@ module.exports.detail = async (req, res) => {
 // [PATCH] /api/v1/admin/tours/edit/:slug
 module.exports.editPatch = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("tours_edit")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền chỉnh sửa tour",
+      });
+    }
     const slug = req.params.slug;
     const updatedBy = {
       accountId: req.user.id,

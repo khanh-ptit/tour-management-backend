@@ -3,6 +3,12 @@ const Service = require("../../models/service.model");
 // [GET] /api/v1/admin/services
 module.exports.index = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("services_view")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền xem danh sách dịch vụ",
+      });
+    }
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
@@ -22,8 +28,9 @@ module.exports.index = async (req, res) => {
     const services = await Service.find(find)
       .sort(sort)
       .skip(skip)
-      .limit(limit);
-
+      .limit(limit)
+      .populate("createdBy.accountId", "fullName")
+      .populate("updatedBy.accountId", "fullName");
     res.json({ services, total });
   } catch (error) {
     console.error("Lỗi lấy danh sách dịch vụ:", error);
@@ -34,6 +41,12 @@ module.exports.index = async (req, res) => {
 // [GET] /api/v1/admin/services/detail/:id
 module.exports.detail = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("services_view")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền xem danh sách dịch vụ",
+      });
+    }
     const service = await Service.findById(req.params.id);
     if (!service || service.deleted) {
       return res
@@ -50,7 +63,17 @@ module.exports.detail = async (req, res) => {
 // [POST] /api/v1/admin/services/create
 module.exports.createPost = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("services_create")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền tạo mới dịch vụ",
+      });
+    }
     const newService = new Service(req.body);
+    newService.createdBy = {
+      accountId: req.user.id,
+      createdAt: new Date(),
+    };
     await newService.save();
     res.status(201).json({
       code: 201,
@@ -59,20 +82,36 @@ module.exports.createPost = async (req, res) => {
     });
   } catch (error) {
     console.error("Lỗi thêm dịch vụ:", error);
-    res
-      .status(500)
-      .json({
-        code: 500,
-        message: "Thêm dịch vụ thất bại",
-        error: error.message,
-      });
+    res.status(500).json({
+      code: 500,
+      message: "Thêm dịch vụ thất bại",
+      error: error.message,
+    });
   }
 };
 
 // [PATCH] /api/v1/admin/services/edit/:id
 module.exports.editPatch = async (req, res) => {
   try {
-    const result = await Service.updateOne({ _id: req.params.id }, req.body);
+    if (!req.role.permissions.includes("services_edit")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền chỉnh sửa dịch vụ",
+      });
+    }
+    const updatedBy = {
+      accountId: req.user.id,
+      updatedAt: new Date(),
+    };
+    const result = await Service.updateOne(
+      { _id: req.params.id },
+      {
+        $set: req.body,
+        $push: {
+          updatedBy: updatedBy,
+        },
+      }
+    );
     if (result.matchedCount === 0) {
       return res
         .status(404)
@@ -90,9 +129,19 @@ module.exports.editPatch = async (req, res) => {
 // [DELETE] /api/v1/admin/services/delete/:id
 module.exports.deleteItem = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("services_delete")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền xóa dịch vụ",
+      });
+    }
+    const deletedBy = {
+      accountId: req.user.id,
+      deletedAt: new Date(),
+    };
     const result = await Service.updateOne(
       { _id: req.params.id },
-      { deleted: true }
+      { deleted: true, deletedBy }
     );
     if (result.matchedCount === 0) {
       return res

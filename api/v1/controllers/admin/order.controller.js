@@ -4,6 +4,12 @@ const Order = require("../../models/order.model");
 // [GET] /api/v1/admin/orders
 module.exports.index = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("orders_view")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền xem đơn hàng",
+      });
+    }
     let find = { deleted: false };
     const {
       limit = 4,
@@ -66,6 +72,12 @@ module.exports.index = async (req, res) => {
 // [GET] /api/v1/admin/orders/detail/:id
 module.exports.detail = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("orders_view")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền xem đơn hàng",
+      });
+    }
     const { id } = req.params;
     const order = await Order.findOne({
       _id: id,
@@ -102,6 +114,12 @@ module.exports.detail = async (req, res) => {
 // [PATCH] /api/v1/admin/orders/edit/:id
 module.exports.edit = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("orders_edit")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền chỉnh sửa đơn hàng",
+      });
+    }
     const { id } = req.params;
     const data = req.body;
 
@@ -134,6 +152,12 @@ module.exports.edit = async (req, res) => {
 // [DELETE] /api/v1/admin/orders/delete/:id
 module.exports.delete = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("orders_delete")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền xóa đơn hàng",
+      });
+    }
     const { id } = req.params;
     const order = await Order.findOne({ _id: id, deleted: false });
     if (!order) {

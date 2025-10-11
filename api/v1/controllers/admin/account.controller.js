@@ -4,6 +4,12 @@ const md5 = require("md5");
 // [GET] /api/v1/admin/accounts
 module.exports.index = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("accounts_view")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền xem danh sách tài khoản admin",
+      });
+    }
     let find = { deleted: false };
     let sort = {};
     if (req.query.status) {
@@ -48,6 +54,12 @@ module.exports.index = async (req, res) => {
 // [POST] /api/v1/admin/account/create
 module.exports.create = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("accounts_create")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền tạo tài khoản admin",
+      });
+    }
     const { email, phone } = req.body;
     const existEmail = await Account.findOne({
       email: email,
@@ -93,6 +105,12 @@ module.exports.create = async (req, res) => {
 // [DELETE] /api/v1/admin/account/delete
 module.exports.delete = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("accounts_delete")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền xoá tài khoản admin",
+      });
+    }
     const { id } = req.params;
     const account = await Account.findOne({ _id: id, deleted: false });
     if (!account) {
@@ -118,6 +136,12 @@ module.exports.delete = async (req, res) => {
 // [GET] /api/v1/admin/account/detail/:id
 module.exports.detail = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("accounts_view")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền xem danh sách tài khoản admin",
+      });
+    }
     const { id } = req.params;
     const account = await Account.findOne({
       _id: id,
@@ -147,6 +171,12 @@ module.exports.detail = async (req, res) => {
 // [PATCH] /api/v1/admin/account/edit/:id
 module.exports.edit = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("accounts_edit")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền chỉnh sửa tài khoản admin",
+      });
+    }
     const { id } = req.params;
     const { email, phone } = req.body;
 

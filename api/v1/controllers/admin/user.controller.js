@@ -3,6 +3,12 @@ const User = require("../../models/user.model");
 // [GET] /api/v1/admin/users
 module.exports.index = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("users_view")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền xem danh sách tài khoản client",
+      });
+    }
     let find = { deleted: false };
 
     let sort = {};
@@ -43,6 +49,12 @@ module.exports.index = async (req, res) => {
 // [GET] /api/v1/admin/users/detail/:id
 module.exports.detail = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("users_view")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền xem danh sách tài khoản client",
+      });
+    }
     const user = await User.findById(req.params.id);
     if (!user || user.deleted) {
       return res
@@ -56,8 +68,15 @@ module.exports.detail = async (req, res) => {
   }
 };
 
+// [PATCH] /api/v1/admin/users/edit/:id
 module.exports.editPatch = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("users_edit")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền chỉnh sửa tài khoản client",
+      });
+    }
     const result = await User.updateOne({ _id: req.params.id }, req.body);
 
     if (result.matchedCount === 0) {
@@ -77,8 +96,15 @@ module.exports.editPatch = async (req, res) => {
   }
 };
 
+// [DELETE] /api/v1/admin/users/delete/:id
 module.exports.deleteItem = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("users_delete")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền xóa tài khoản client",
+      });
+    }
     const result = await User.updateOne(
       { _id: req.params.id },
       { deleted: true }

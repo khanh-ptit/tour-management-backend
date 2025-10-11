@@ -3,7 +3,17 @@ const Role = require("../../models/role.model");
 // [POST] /api/v1/roles/create
 module.exports.create = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("roles_create")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền tạo mới nhóm quyền",
+      });
+    }
     const newRole = new Role(req.body);
+    newRole.createdBy = {
+      accountId: req.user.id,
+      createdAt: new Date(),
+    };
     await newRole.save();
     res.status(201).json({
       code: 201,
@@ -22,7 +32,15 @@ module.exports.create = async (req, res) => {
 // [GET] /api/v1/roles
 module.exports.index = async (req, res) => {
   try {
-    const roles = await Role.find({ deleted: false });
+    if (!req.role.permissions.includes("roles_view")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền xem danh sách nhóm quyền",
+      });
+    }
+    const roles = await Role.find({ deleted: false })
+      .populate("createdBy.accountId", "fullName")
+      .populate("updatedBy.accountId", "fullName");
     const total = await Role.countDocuments({ deleted: false });
     res.status(200).json({
       code: 200,
@@ -42,9 +60,20 @@ module.exports.index = async (req, res) => {
 // [DELETE] /api/v1/roles/delete
 module.exports.delete = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("roles_delete")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền xóa nhóm quyền",
+      });
+    }
     const { id } = req.params;
+    const deletedBy = {
+      accountId: req.user.id,
+      deletedAt: new Date(),
+    };
     await Role.findByIdAndUpdate(id, {
       deleted: true,
+      deletedBy,
     });
     res.status(200).json({
       code: 200,
@@ -63,6 +92,12 @@ module.exports.delete = async (req, res) => {
 // [GET] /api/v1/roles/detail/:id
 module.exports.detail = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("roles_view")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền xem chi tiết nhóm quyền",
+      });
+    }
     const { id } = req.params;
     const role = await Role.findOne({ _id: id });
     if (!role) {
@@ -88,6 +123,12 @@ module.exports.detail = async (req, res) => {
 // [PATCH] /api/v1/roles/edit/:id
 module.exports.edit = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("roles_edit")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền xem chỉnh sửa nhóm quyền",
+      });
+    }
     const { id } = req.params;
     const role = await Role.findOne({ _id: id });
     if (!role) {
@@ -96,7 +137,19 @@ module.exports.edit = async (req, res) => {
         message: "Không tìm thấy nhóm quyền",
       });
     }
-    await Role.findOneAndUpdate({ _id: id }, req.body);
+    const updatedBy = {
+      accountId: req.user.id,
+      updatedAt: new Date(),
+    };
+    await Role.findOneAndUpdate(
+      { _id: id },
+      {
+        $set: req.body,
+        $push: {
+          updatedBy: updatedBy,
+        },
+      }
+    );
     res.status(200).json({
       code: 200,
       message: "Cập nhật nhóm quyền thành công",
@@ -115,6 +168,12 @@ module.exports.edit = async (req, res) => {
 // [PATCH] /api/v1/roles/permission
 module.exports.permission = async (req, res) => {
   try {
+    if (!req.role.permissions.includes("roles_permissions")) {
+      return res.status(403).json({
+        code: 403,
+        message: "Không có quyền phân quyền",
+      });
+    }
     const updateObj = req.body;
 
     const bulkOps = Object.entries(updateObj).map(([roleId, perms]) => ({

@@ -13,6 +13,38 @@ const tourCategorySchema = new mongoose.Schema(
       ref: "TourCategory", // Liên kết với chính model này
       default: null, // Nếu null thì là danh mục gốc
     },
+    createdBy: {
+      accountId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Account",
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+    updatedBy: [
+      {
+        accountId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Account",
+        },
+        updatedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+    deletedBy: {
+      accountId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Account",
+      },
+      deletedAt: {
+        type: Date,
+        default: null,
+      },
+    },
     deleted: { type: Boolean, default: false }, // Xóa mềm
   },
   { timestamps: true }

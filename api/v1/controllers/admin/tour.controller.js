@@ -135,12 +135,18 @@ module.exports.detail = async (req, res) => {
       .populate("categoryId", "name")
       .populate("services", "name price")
       .lean();
+    if (!tour) {
+      return res.status(404).json({
+        code: 404,
+        message: "Không tìm thấy thông tin tour!",
+      });
+    }
     tour.newPrice = (tour.totalPrice * (100 - tour.discountPercentage)) / 100;
     res.status(200).json(tour);
   } catch (error) {
     console.log("Lỗi: ", error);
-    res.status(400).json({
-      code: 400,
+    res.status(500).json({
+      code: 500,
       message: "Lỗi khi lấy thông tin tour!",
       error: error.message,
     });

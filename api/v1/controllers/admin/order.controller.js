@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const { PHONE_REGEX } = require("../../../../config/constant");
 const Order = require("../../models/order.model");
 
@@ -79,6 +80,12 @@ module.exports.detail = async (req, res) => {
       });
     }
     const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        code: 400,
+        message: "ID đơn hàng không hợp lệ",
+      });
+    }
     const order = await Order.findOne({
       _id: id,
       deleted: false,

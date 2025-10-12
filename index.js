@@ -56,6 +56,14 @@ const routeClient = require("./api/v1/routes/client/index.route");
 routeAdmin(app);
 routeClient(app);
 
+// here
+app.all("*", (req, res) => {
+  return res.status(404).json({
+    code: 404,
+    message: "Trang bạn đang tìm kiếm không tồn tại",
+  });
+});
+
 // ✅ Import và khởi động socket
 const chatSocket = require("./api/v1/sockets/chat.socket");
 chatSocket();

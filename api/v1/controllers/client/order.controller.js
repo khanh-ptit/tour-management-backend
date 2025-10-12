@@ -1,6 +1,7 @@
 const Order = require("../../models/order.model");
 const QRCode = require("qrcode");
 const axios = require("axios");
+const { default: mongoose } = require("mongoose");
 const API_KEY = process.env.API_KEY;
 const ACCOUNT_NUMBER = process.env.ACCOUNT_NUMBER;
 
@@ -72,6 +73,12 @@ module.exports.createOrder = async (req, res) => {
 module.exports.detail = async (req, res) => {
   try {
     const id = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        code: 400,
+        message: "ID đơn hàng không hợp lệ",
+      });
+    }
     const order = await Order.findOne({ _id: id }).populate(
       "tours.tourId",
       "name images departureDate returnDate slug"

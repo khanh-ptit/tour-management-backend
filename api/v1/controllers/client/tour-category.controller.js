@@ -109,3 +109,45 @@ module.exports.getTourByCategory = async (req, res) => {
     });
   }
 };
+
+// Đệ quy xây dựng danh mục cây
+const buildCategoryTree = (categories, parentId = null, level = 0) => {
+  let tree = [];
+  categories
+    .filter((cat) => String(cat.categoryParentId) === String(parentId))
+    .forEach((cat) => {
+      tree.push({
+        _id: cat._id,
+        name: `${"---".repeat(level)} ${cat.name}`,
+        categoryParentId: cat.categoryParentId,
+        slug: cat.slug,
+      });
+
+      // Gọi đệ quy để lấy danh mục con
+      tree = tree.concat(buildCategoryTree(categories, cat._id, level + 1));
+    });
+  return tree;
+};
+
+// [GET] /api/v1/tour-categories
+module.exports.index = async (req, res) => {
+  try {
+    const categories = await TourCategory.find({ deleted: false });
+
+    // Dùng đệ quy để tạo danh mục có phân cấp
+    const formattedCategories = buildCategoryTree(categories);
+
+    res.status(200).json({
+      code: 200,
+      tourCategories: formattedCategories,
+      total: categories.length,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      code: 500,
+      message: "Lỗi khi lấy danh sách danh mục",
+      error: error.message,
+    });
+  }
+};

@@ -336,6 +336,15 @@ module.exports.login = async (req, res) => {
 
     const cart = await Cart.findOne({ userId: user._id });
 
+    if (user.isTwoFa) {
+      return res.status(200).json({
+        code: 200,
+        message: "Mật khẩu chính xác. Yêu cầu xác thực giọng nói.",
+        requireTwoFa: true,
+        userId: user._id,
+      });
+    }
+
     // Tạo JWT token
     const token = jwt.sign(
       { userId: user._id, email: user.email },
@@ -358,6 +367,56 @@ module.exports.login = async (req, res) => {
       code: 500,
       message: "Đã xảy ra lỗi khi đăng nhập!",
     });
+  }
+};
+
+module.exports.verifyVoice = async (req, res) => {
+  try {
+    const { email } = req.body; // từ formData
+    const voiceFile = req.file; // file audio từ FE
+
+    console.log("🚀 ~ email:", email);
+    console.log("🚀 ~ voiceFile:", voiceFile);
+
+    if (!voiceFile) {
+      return res
+        .status(400)
+        .json({ code: 400, message: "Chưa có file âm thanh!" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ code: 404, message: "Không tìm thấy người dùng." });
+    }
+
+    // Giả lập verify
+    const score = Math.random();
+    console.log("🚀 ~ score:", score);
+    if (score < 0.01) {
+      return res
+        .status(401)
+        .json({ code: 401, message: "Xác thực thất bại", score });
+    }
+
+    const token = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+    const { password: _, ...userData } = user.toObject();
+
+    res.status(200).json({
+      code: 200,
+      message: "Xác thực thành công!",
+      user: userData,
+      token,
+      score,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ code: 500, message: "Lỗi xác thực giọng nói." });
   }
 };
 

@@ -15,4 +15,6 @@ router.get("/order-count", controller.orderCount);
 
 router.get("/this-month-profit", controller.thisMonthProfit);
 
+router.get("/export", controller.exportExcel);
+
 module.exports = router;

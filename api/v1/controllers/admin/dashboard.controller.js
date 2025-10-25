@@ -1,6 +1,14 @@
 const User = require("../../models/user.model");
 const Tour = require("../../models/tour.model");
 const Order = require("../../models/order.model");
+const Service = require("../../models/service.model");
+const ExcelJS = require("exceljs");
+const {
+  headerExcel,
+  setDefaultFont,
+} = require("../../../../helpers/formatExcel");
+const { STATUS_MAP } = require("../../../../config/constant");
+const moment = require("moment");
 
 // [GET] /api/v1/admin/dashboard/user-count
 module.exports.userCount = async (req, res) => {
@@ -284,5 +292,136 @@ module.exports.thisMonthProfit = async (req, res) => {
       code: 500,
       message: "Lỗi máy chủ",
     });
+  }
+};
+
+// [GET] /api/v1/admin/dashboard/export
+module.exports.exportExcel = async (req, res) => {
+  try {
+    const workbook = new ExcelJS.Workbook();
+
+    const tourSheet = workbook.addWorksheet("Danh sách tour du lịch");
+
+    tourSheet.columns = [
+      { header: "STT", key: "stt", width: 8 },
+      { header: "Tên tour", key: "name", width: 40 },
+      { header: "Thời gian", key: "duration", width: 20 },
+      { header: "Ngày đi", key: "departureDate", width: 20 },
+      { header: "Ngày về", key: "returnDate", width: 20 },
+      { header: "Trạng thái", key: "status", width: 20 },
+      { header: "Giá niêm yết (VNĐ)", key: "totalPrice", width: 25 },
+      { header: "Giá mới (VNĐ)", key: "newPrice", width: 25 },
+      { header: "Giảm giá (%)", key: "discountPercentage", width: 20 },
+      { header: "Người tạo", key: "createdBy", width: 30 },
+      { header: "Thời gian tạo", key: "createdAt", width: 30 },
+    ];
+
+    const tourData = await Tour.find({ deleted: false })
+      .populate("createdBy.accountId", "fullName")
+      .lean();
+
+    for (const item of tourData) {
+      let newPrice = parseInt(
+        (item.totalPrice * (100 - item.discountPercentage)) / 100
+      );
+      item.newPrice = newPrice;
+    }
+
+    tourData.forEach((item, index) => {
+      tourSheet.addRow({
+        ...item,
+        stt: index + 1,
+        departureDate: moment(item.departureDate).format("DD/MM/YYYY"),
+        returnDate: moment(item.returnDate).format("DD/MM/YYYY"),
+        totalPrice: item.totalPrice,
+        newPrice: item.newPrice,
+        status: STATUS_MAP[item.status],
+        createdBy: item.createdBy.accountId.fullName,
+        createdAt: moment(item.createdAt).format("hh:mm DD/MM/YYYY"),
+      });
+    });
+
+    tourSheet.getColumn("totalPrice").numFmt = "#,##0";
+    tourSheet.getColumn("newPrice").numFmt = "#,##0";
+    headerExcel(tourSheet);
+    setDefaultFont(tourSheet);
+
+    const serviceSheet = workbook.addWorksheet("Danh sách dịch vụ");
+
+    serviceSheet.columns = [
+      { header: "STT", key: "stt", width: 8 },
+      { header: "Tên dịch vụ", key: "name", width: 35 },
+      { header: "Mô tả", key: "description", width: 100 },
+      { header: "Giá (VNĐ)", key: "price", width: 30 },
+      { header: "Nguời tạo", key: "createdBy", width: 30 },
+      { header: "Thời gian tạo", key: "createdAt", width: 30 },
+    ];
+
+    const serviceData = await Service.find({ deleted: false }).populate(
+      "createdBy.accountId",
+      "fullName"
+    );
+    serviceData.forEach((item, index) => {
+      return serviceSheet.addRow({
+        stt: index + 1,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        createdBy: item.createdBy.accountId.fullName,
+        createdAt: moment(item.createdAt).format("HH:mm DD/MM/YYYY"),
+      });
+    });
+    serviceSheet.getColumn("price").numFmt = "#,##0";
+
+    headerExcel(serviceSheet);
+    setDefaultFont(serviceSheet);
+
+    const orderSheet = workbook.addWorksheet("Danh sách đơn hàng");
+
+    orderSheet.columns = [
+      { header: "STT", key: "stt", width: 8 },
+      { header: "Tên khách hàng", key: "customerName", width: 35 },
+      { header: "Số điện thoại", key: "phone", width: 25 },
+      { header: "Địa chỉ", key: "address", width: 80 },
+      { header: "Giá (VNĐ)", key: "price", width: 20 },
+      { header: "Trạng thái", key: "status", width: 25 },
+      { header: "Số lượng tour", key: "totalTour", width: 20 },
+      { header: "Thời gian tạo", key: "createdAt", width: 30 },
+    ];
+
+    const orderData = await Order.find({
+      deleted: false,
+    });
+    orderData.forEach((item, index) => {
+      return orderSheet.addRow({
+        stt: index + 1,
+        customerName: item.userInfo.fullName,
+        phone: item.userInfo.phone,
+        address: item.userInfo.address,
+        price: item.totalPrice,
+        status: item.isPaid ? "Đã thanh toán" : "Chưa thanh toán",
+        totalTour: item.tours.length,
+        createdAt: moment(item.createdAt).format("HH:mm DD/MM/YYYY"),
+      });
+    });
+    orderSheet.getColumn("price").numFmt = "#,##0";
+
+    headerExcel(orderSheet);
+    setDefaultFont(orderSheet);
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=danh_sach_tong_hop.xlsx"
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error("Lỗi máy chủ:", error);
+    res.status(500).json({ code: 500, message: "Lỗi máy chủ" });
   }
 };

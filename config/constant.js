@@ -4,3 +4,8 @@ module.exports = {
   PASSWORD_REGEX: /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{6,}$/,
   OTP_REGEX: /^\d{6}$/,
 };
+
+module.exports.STATUS_MAP = {
+  active: "Hoạt động",
+  inactive: "Dừng hoạt động",
+};

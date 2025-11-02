@@ -101,4 +101,10 @@ router.patch(
   controller.toggleTwoFa
 );
 
+router.post(
+  "/enable-two-fa/:id",
+  authMiddleware.requireAuth,
+  controller.enableTwoFa
+);
+
 module.exports = router;

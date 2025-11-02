@@ -475,6 +475,40 @@ module.exports.toggleTwoFa = async (req, res) => {
   }
 };
 
+// [POST] /api/v1/user/enable-two-fa/:id
+module.exports.enableTwoFa = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({
+        code: 404,
+        message: "Người dùng không tồn tại",
+      });
+    }
+
+    await User.updateOne(
+      {
+        _id: id,
+      },
+      {
+        voiceUrl: req.body.voiceUrl,
+        isTwoFa: true,
+      }
+    );
+    res.status(200).json({
+      code: 200,
+      message: "Bật xác thực 2FA thành công",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      code: 500,
+      message: "Lỗi server kích hoạt 2FA.",
+    });
+  }
+};
+
 // [POST] /api/v1/user/password/forgot
 module.exports.forgotPassword = async (req, res) => {
   try {

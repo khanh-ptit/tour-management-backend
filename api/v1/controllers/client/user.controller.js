@@ -8,6 +8,7 @@ const generateHelper = require("../../../../helpers/generate");
 const sendMailHelper = require("../../../../helpers/sendMail");
 const md5 = require("md5");
 const jwt = require("jsonwebtoken");
+const axios = require("axios");
 const cron = require("node-cron");
 const Order = require("../../models/order.model");
 
@@ -406,17 +407,71 @@ module.exports.verifyVoice = async (req, res) => {
       { expiresIn: "7d" }
     );
     const { password: _, ...userData } = user.toObject();
+    const cart = await Cart.findOne({ userId: user._id });
 
     res.status(200).json({
       code: 200,
       message: "Xác thực thành công!",
       user: userData,
       token,
+      cart,
       score,
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ code: 500, message: "Lỗi xác thực giọng nói." });
+  }
+};
+
+// [PATCH] /api/v1/user/toggle-two-fa/
+module.exports.toggleTwoFa = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, captchaToken } = req.query;
+
+    if (status === "false") {
+      if (!captchaToken) {
+        return res.status(400).json({
+          code: 400,
+          message: "Thiếu mã xác thực CAPTCHA.",
+        });
+      }
+
+      const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+      const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${captchaToken}`;
+      const { data } = await axios.post(verifyUrl);
+
+      if (!data.success) {
+        return res.status(400).json({
+          code: 400,
+          message: "Xác minh CAPTCHA thất bại. Vui lòng thử lại.",
+        });
+      }
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({
+        code: 404,
+        message: "Người dùng không tồn tại",
+      });
+    }
+
+    await User.updateOne({ _id: id }, { isTwoFa: status });
+
+    return res.status(200).json({
+      code: 200,
+      message:
+        status === "true"
+          ? "Đã bật xác thực 2 yếu tố"
+          : "Đã tắt xác thực 2 yếu tố",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      code: 500,
+      message: "Lỗi server khi thay đổi trạng thái 2FA.",
+    });
   }
 };
 

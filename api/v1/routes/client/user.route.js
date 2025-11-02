@@ -95,4 +95,10 @@ router.patch(
   controller.editInfo
 );
 
+router.patch(
+  "/toggle-two-fa/:id",
+  authMiddleware.requireAuth,
+  controller.toggleTwoFa
+);
+
 module.exports = router;

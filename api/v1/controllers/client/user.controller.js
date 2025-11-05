@@ -11,6 +11,12 @@ const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const cron = require("node-cron");
 const Order = require("../../models/order.model");
+const {
+  verifyVoiceSimilarity,
+} = require("../../../../services/voiceVerifyVoice");
+const {
+  uploadToCloudinaryBuffer,
+} = require("../../../../helpers/cloudinary.helper");
 
 // [POST] /api/v1/user/register
 module.exports.register = async (req, res) => {
@@ -392,10 +398,15 @@ module.exports.verifyVoice = async (req, res) => {
         .json({ code: 404, message: "Không tìm thấy người dùng." });
     }
 
-    // Giả lập verify
-    const score = Math.random();
-    console.log("🚀 ~ score:", score);
-    if (score < 0.01) {
+    // Upload file tạm của người dùng lên Cloudinary
+    const testUrl = await uploadToCloudinaryBuffer(voiceFile.buffer, "video");
+    console.log("🚀 ~ testUrl:", testUrl);
+    const refUrl = user.voiceUrl;
+    console.log("🚀 ~ refUrl:", refUrl);
+    const score = await verifyVoiceSimilarity(refUrl, testUrl);
+
+    console.log("🎤 Voice similarity score:", score);
+    if (score < 0.8) {
       return res
         .status(401)
         .json({ code: 401, message: "Xác thực thất bại", score });

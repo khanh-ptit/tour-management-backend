@@ -40,6 +40,7 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    voiceUrl: String,
   },
   {
     timestamps: true,

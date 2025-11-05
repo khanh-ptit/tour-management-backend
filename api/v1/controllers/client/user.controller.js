@@ -11,6 +11,12 @@ const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const cron = require("node-cron");
 const Order = require("../../models/order.model");
+const {
+  verifyVoiceSimilarity,
+} = require("../../../../services/voiceVerifyVoice");
+const {
+  uploadToCloudinaryBuffer,
+} = require("../../../../helpers/cloudinary.helper");
 
 // [POST] /api/v1/user/register
 module.exports.register = async (req, res) => {
@@ -392,10 +398,15 @@ module.exports.verifyVoice = async (req, res) => {
         .json({ code: 404, message: "Không tìm thấy người dùng." });
     }
 
-    // Giả lập verify
-    const score = Math.random();
-    console.log("🚀 ~ score:", score);
-    if (score < 0.01) {
+    // Upload file tạm của người dùng lên Cloudinary
+    const testUrl = await uploadToCloudinaryBuffer(voiceFile.buffer, "video");
+    console.log("🚀 ~ testUrl:", testUrl);
+    const refUrl = user.voiceUrl;
+    console.log("🚀 ~ refUrl:", refUrl);
+    const score = await verifyVoiceSimilarity(refUrl, testUrl);
+
+    console.log("🎤 Voice similarity score:", score);
+    if (score < 0.8) {
       return res
         .status(401)
         .json({ code: 401, message: "Xác thực thất bại", score });
@@ -471,6 +482,40 @@ module.exports.toggleTwoFa = async (req, res) => {
     return res.status(500).json({
       code: 500,
       message: "Lỗi server khi thay đổi trạng thái 2FA.",
+    });
+  }
+};
+
+// [POST] /api/v1/user/enable-two-fa/:id
+module.exports.enableTwoFa = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({
+        code: 404,
+        message: "Người dùng không tồn tại",
+      });
+    }
+
+    await User.updateOne(
+      {
+        _id: id,
+      },
+      {
+        voiceUrl: req.body.voiceUrl,
+        isTwoFa: true,
+      }
+    );
+    res.status(200).json({
+      code: 200,
+      message: "Bật xác thực 2FA thành công",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      code: 500,
+      message: "Lỗi server kích hoạt 2FA.",
     });
   }
 };

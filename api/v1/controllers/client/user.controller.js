@@ -406,7 +406,7 @@ module.exports.verifyVoice = async (req, res) => {
     const score = await verifyVoiceSimilarity(refUrl, testUrl);
 
     console.log("🎤 Voice similarity score:", score);
-    if (score < 0.8) {
+    if (score < 0.7) {
       return res
         .status(401)
         .json({ code: 401, message: "Xác thực thất bại", score });

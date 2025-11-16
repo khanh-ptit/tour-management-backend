@@ -4,6 +4,7 @@ const router = express.Router();
 const controller = require("../../controllers/client/user.controller");
 const validate = require("../../validates/client/user.validate");
 const authMiddleware = require("../../middlewares/client/auth.middleware");
+const rateLimitMiddleware = require("../../middlewares/common/rate-limit.middleware");
 const multer = require("multer");
 
 /**
@@ -46,7 +47,12 @@ const upload = multer({ storage });
 
 router.post("/register", validate.register, controller.register);
 
-router.post("/login", validate.login, controller.login);
+router.post(
+  "/login",
+  // rateLimitMiddleware.loginLimiter,
+  validate.login,
+  controller.login
+);
 
 router.post("/verify-voice", upload.single("voice"), controller.verifyVoice);
 

@@ -3,6 +3,7 @@ const http = require("http"); // Import module HTTP để tạo server
 const { Server } = require("socket.io"); // Import socket.io
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+const helmet = require("helmet");
 require("dotenv").config();
 const database = require("./config/database");
 
@@ -12,6 +13,9 @@ const swaggerSpec = require("./api/v1/docs/swagger.docs");
 database.connect();
 
 const app = express();
+
+app.use(helmet());
+app.disable("x-powered-by");
 const server = http.createServer(app); // Tạo HTTP server từ Express
 const io = new Server(server, {
   cors: {

@@ -1,3 +1,4 @@
+const slugify = require("slugify");
 const Tour = require("../../models/tour.model");
 
 // [GET] /api/v1/admin/tours
@@ -17,7 +18,9 @@ module.exports.index = async (req, res) => {
 
     if (req.query.name) {
       const keyword = req.query.name;
-      const regex = new RegExp(keyword, "i");
+      // Chuyển đổi tourName sang dạng slug để tìm kiếm
+      const slugifiedName = slugify(keyword, { lower: true, strict: true });
+      const regex = new RegExp(slugifiedName, "i");
       find.slug = regex;
     }
 
